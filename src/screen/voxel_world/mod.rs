@@ -6,7 +6,6 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use super::Screen;
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 
-use player_controller::*;
 use voxel_util::{spawn_voxel_map, Blocks};
 
 pub(super) fn plugin(app: &mut App) {
