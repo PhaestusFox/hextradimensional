@@ -4,7 +4,6 @@ use crate::ui::widgets::{Containers, UiRoot, Widgets};
 use bevy::prelude::*; // Adjust this path as needed
 
 pub fn setup_inventory_ui(mut commands: Commands, player_query: Query<(&Inventory, &VoxelPlayer)>) {
-    println!("Test Setup UI {:?}", player_query);
     if let Ok(player_inventory) = player_query.get_single() {
         commands
             .ui_root() // Assuming you have this method from the Containers trait
