@@ -1,8 +1,9 @@
 //! The screen state for the voxel world game loop.
 pub mod inventory;
 mod player_controller;
+pub mod world;
 mod ui;
-mod voxel_util;
+pub mod voxel_util;
 
 use super::{MapDirection, Screen};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
@@ -33,6 +34,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.init_resource::<Blocks>();
     app.add_plugins(player_controller::VoxelCamera);
+    world::voxel_world(app);
 }
 
 fn enter_playing(mut commands: Commands) {
@@ -50,7 +52,7 @@ fn return_to_hex_map(mut next_screen: ResMut<NextState<Screen>>) {
 
 const VOXEL_DIVISION_FACTOR: usize = 16;
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Reflect)]
 pub struct VoxelData(Arc<[BlockType; VOXEL_DIVISION_FACTOR.pow(3)]>);
 
 impl Default for VoxelData {
@@ -61,14 +63,14 @@ impl Default for VoxelData {
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Reflect)]
 pub struct DirectedVoxel {
     direction: Option<MapDirection>,
     voxel: VoxelData,
 }
 
 /// All block types
-#[derive(Debug, Hash, PartialEq, Eq, strum_macros::EnumIter, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, strum_macros::EnumIter, Clone, Reflect)]
 pub enum BlockType {
     Air,
     Stone,

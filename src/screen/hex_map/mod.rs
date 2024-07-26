@@ -1,6 +1,6 @@
 //! The screen state for the main hex map game loop.
 mod bundle;
-mod cells;
+pub(crate) mod cells;
 mod cursor;
 mod hex_util;
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};

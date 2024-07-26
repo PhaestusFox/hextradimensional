@@ -1,7 +1,8 @@
-use crate::screen::{voxel_world::player_controller::VoxelCamera, HexSelect, MapDirection, Screen};
+use crate::screen::{hex_map::cells::HexId, voxel_world::player_controller::VoxelCamera, HexSelect, MapDirection, Screen};
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier3d::prelude::*;
 use rand::{Rng, SeedableRng};
+use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
 use super::{inventory::Inventory, BlockType};
@@ -48,7 +49,7 @@ pub fn spawn_voxel_map(mut commands: Commands, blocks: Res<Blocks>, hex_select: 
                 },
             ));
         });
-
+    return;
     fill_world(
         commands,
         hex_select.hex_id,
@@ -68,8 +69,9 @@ fn pos_from_enter(direction: &MapDirection) -> Vec3 {
     }
 }
 
-#[derive(PartialEq, Eq)]
-enum WorldType {
+#[derive(PartialEq, Eq, Serialize, Deserialize, Default, Debug, Clone, Copy)]
+pub enum WorldType {
+    #[default]
     Empty,
     Stone,
     Coal,
@@ -111,7 +113,7 @@ impl WorldType {
         }
     }
 
-    fn sample(&self, mut rng: impl Rng, pos: IVec3) -> BlockType {
+    pub fn sample(&self, mut rng: &mut impl Rng, pos: IVec3) -> BlockType {
         match self {
             WorldType::Flat => {
                 if pos.y == 0 {
@@ -145,11 +147,11 @@ impl WorldType {
     }
 }
 
-fn fill_world(mut commands: Commands, id: Vec2, world_type: WorldType, blocks: &Blocks) {
+fn fill_world(mut commands: Commands, id: HexId, world_type: WorldType, blocks: &Blocks) {
     if world_type == WorldType::Empty {
         return;
     }
-    let mut rng = rand::rngs::StdRng::seed_from_u64((id.x as u64) << 32 | id.y as u64);
+    let mut rng = rand::rngs::StdRng::seed_from_u64((id.q() as u64) << 32 | id.r() as u64);
     for x in 0..16 {
         for y in 0..16 {
             for z in 0..16 {
@@ -185,7 +187,7 @@ impl BlockType {
         }
     }
 
-    const fn is_solid(&self) -> bool {
+    pub const fn is_solid(&self) -> bool {
         match self {
             BlockType::Air => false,
             BlockType::Stone => true,

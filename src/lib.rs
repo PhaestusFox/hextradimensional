@@ -5,15 +5,23 @@ mod screen;
 mod ui;
 
 use bevy::{
-    asset::AssetMetaCheck,
+    asset::{io::{AssetSource, AssetSourceBuilder, AssetSourceId}, AssetMetaCheck},
     audio::{AudioPlugin, Volume},
     prelude::*,
 };
+use screen::voxel_world;
 
 pub struct AppPlugin;
 
 impl Plugin for AppPlugin {
-    fn build(&self, app: &mut App) {
+    fn build(&self, app: &mut App) {    
+
+        app.register_asset_source("chunk", AssetSource::build().with_reader(|| {
+            Box::new(voxel_world::world::ChunkReader(
+                AssetSource::get_default_reader("savedata".to_string())()
+            ))
+        }));
+
         // Order new `AppStep` variants by adding them here:
         app.configure_sets(
             Update,

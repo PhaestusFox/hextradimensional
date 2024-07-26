@@ -21,6 +21,8 @@ strum_macros = "0.26.4"
 
 bevy_rapier3d = "*"
 
+serde = "*"
+
 [features]
 default = [
     # Default to a native dev build.

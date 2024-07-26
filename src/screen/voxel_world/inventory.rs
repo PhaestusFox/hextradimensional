@@ -30,15 +30,20 @@ impl Inventory {
         }
     }
 
-    pub fn add_resource(&mut self, resource_type: BlockType, quantity: u32) {
+    /// returns true if added and false if Inventory full
+    pub fn add_resource(&mut self, resource_type: BlockType, quantity: u32) -> bool {
         match self.slots.iter_mut().find(|slot| {
             slot.resource_type == Some(resource_type.clone()) || slot.resource_type.is_none()
         }) {
             Some(slot) => {
                 slot.resource_type = Some(resource_type);
                 slot.quantity += quantity;
+                true
             }
-            None => println!("Inventory full, couldn't add resource"),
+            None => {
+                println!("Inventory full, couldn't add resource");
+                false
+            },
         }
     }
 

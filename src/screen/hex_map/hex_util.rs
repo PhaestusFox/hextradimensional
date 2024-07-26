@@ -66,8 +66,10 @@ pub fn go_to_voxel(
         let a = *cursor.1;
 
         *hex_select = HexSelect {
-            hex_id: Vec2::new(cursor.0.x(), cursor.0.y()),
+            hex_id: *cursor.0,
             direction: *cursor.1,
+            world: hex_type.into(),
+            chunk: Handle::default()
         };
         // ! Fix type later
         //hex_type: hex_type as u8,

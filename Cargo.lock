@@ -972,6 +972,7 @@ dependencies = [
  "bevy_save",
  "log",
  "rand",
+ "serde",
  "strum",
  "strum_macros",
 ]

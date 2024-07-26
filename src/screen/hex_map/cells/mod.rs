@@ -6,19 +6,40 @@ use bevy::{
     transform::components::Transform,
     utils::HashMap,
 };
-use std::f32::consts::PI;
+use std::{f32::consts::PI, fmt::Display, str::FromStr};
 mod iterators;
 mod ops;
 
 pub use iterators::*;
 use strum::IntoEnumIterator;
 
-use crate::screen::MapDirection;
+use crate::screen::{voxel_world::voxel_util::WorldType, MapDirection};
 
 use super::hex_util::{HEX_SIZE, HEX_SPACING, SQR_3, SQR_3_DIV_THREE, SQR_3_DIV_TWO};
 
 #[derive(Component, PartialEq, Eq, Hash, Debug, Clone, Copy, Default)]
 pub struct HexId(IVec2);
+
+impl Display for HexId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("({}:{})", self.q(), self.r()))
+    }
+}
+
+impl FromStr for HexId {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if !s.starts_with('(') {return Err("need to start with '('");}
+        if !s.ends_with(')') {return Err("need to end with ')'");}
+        let mut segs = s[1..s.len()-1].split(':');
+        let q = segs.next().ok_or("No q between ()")?;
+        let r = segs.next().ok_or("No r between ()")?;
+        let q = q.parse().or(Err("Failed to parse q"))?;
+        let r = r.parse().or(Err("Failed to parse r"))?;
+        Ok(HexId::new(q, r))
+    }
+    
+    type Err = &'static str;
+}
 
 impl HexId {
     pub const fn new(q: i32, r: i32) -> HexId {
@@ -57,6 +78,10 @@ impl HexId {
             y: self.y(),
             z: 0.,
         } * HEX_SIZE
+    }
+
+    pub fn ivec2(&self) -> IVec2 {
+        self.0
     }
 
     pub fn round(q: f32, r: f32) -> HexId {
@@ -162,9 +187,20 @@ impl FromWorld for CellIcons {
     }
 }
 
-#[derive(Component, PartialEq, Eq, Debug, strum_macros::EnumIter, Hash, Clone, Copy)]
+#[derive(Default, Component, PartialEq, Eq, Debug, strum_macros::EnumIter, Hash, Clone, Copy, serde::Deserialize, serde::Serialize)]
 pub enum HexagonType {
+    #[default]
     Empty,
     Stone,
     Coal,
+}
+
+impl Into<WorldType> for HexagonType {
+    fn into(self) -> WorldType {
+        match self {
+            HexagonType::Empty => WorldType::Empty,
+            HexagonType::Stone => WorldType::Stone,
+            HexagonType::Coal => WorldType::Coal,
+        }
+    }
 }
