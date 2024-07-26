@@ -1,11 +1,11 @@
 use crate::screen::hex_map::cells::HexId as CellId;
 
-use super::{super::HexDirection, Ranged};
+use super::{super::MapDirection, Ranged};
 
 pub struct RingIter {
     cell: CellId,
     len: u32,
-    direction: HexDirection,
+    direction: MapDirection,
     i: u32,
     done: bool,
 }
@@ -15,7 +15,7 @@ impl RingIter {
         RingIter {
             cell: CellId::new(-(ring as i32), ring as i32),
             len: ring,
-            direction: HexDirection::Down,
+            direction: MapDirection::Down,
             i: 0,
             done: false,
         }
@@ -38,7 +38,7 @@ impl Iterator for RingIter {
             self.done = true;
         }
         if self.i == self.len {
-            if self.direction == HexDirection::South {
+            if self.direction == MapDirection::South {
                 self.done = true
             };
             self.direction = self.direction.next();

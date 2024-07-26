@@ -1,7 +1,4 @@
-use crate::screen::{
-    voxel_world::voxel_util::VoxelPlayer,
-    Screen,
-};
+use crate::screen::{voxel_world::voxel_util::VoxelPlayer, Screen};
 use bevy::{
     ecs::event::ManualEventReader,
     input::mouse::MouseMotion,
@@ -17,7 +14,10 @@ impl Plugin for VoxelCamera {
         app.init_resource::<VoxelSettings>()
             .init_resource::<InputState>()
             .add_systems(Update, cursor_toggle)
-            .add_systems(Update, (player_look, player_move, apply_jump, player_jump).chain())
+            .add_systems(
+                Update,
+                (player_look, player_move, apply_jump, player_jump).chain(),
+            )
             .add_systems(OnEnter(Screen::VoxelWorld), cursor_grab)
             .add_systems(OnExit(Screen::VoxelWorld), cursor_release);
     }
@@ -100,9 +100,7 @@ fn player_look(
     }
 }
 
-fn cursor_release(
-    mut primary_window: Query<&mut Window, With<PrimaryWindow>>,
-) {
+fn cursor_release(mut primary_window: Query<&mut Window, With<PrimaryWindow>>) {
     if let Ok(mut window) = primary_window.get_single_mut() {
         window.cursor.grab_mode = CursorGrabMode::None;
         window.cursor.visible = true;
@@ -142,8 +140,6 @@ fn cursor_toggle(
         warn!("Primary window not found for `cursor_grab`!");
     }
 }
-
-
 
 #[derive(Resource)]
 pub struct VoxelSettings {
@@ -197,7 +193,7 @@ fn apply_jump(
         };
         controller.translation = Some(to_move);
         jump.left -= jump_power;
-        if jump.left <= 0. {    
+        if jump.left <= 0. {
             commands.entity(player).remove::<Jump>();
         }
     }

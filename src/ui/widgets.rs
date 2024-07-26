@@ -3,6 +3,11 @@
 use bevy::{ecs::system::EntityCommands, prelude::*, ui::Val::*};
 
 use super::{interaction::InteractionPalette, palette::*};
+use crate::screen::voxel_world::inventory::{Inventory, InventorySlot};
+
+// Define the UiRoot component
+#[derive(Component)]
+pub struct UiRoot;
 
 /// An extension trait for spawning UI widgets.
 pub trait Widgets {
@@ -14,6 +19,11 @@ pub trait Widgets {
 
     /// Spawn a simple text label.
     fn label(&mut self, text: impl Into<String>) -> EntityCommands;
+    /// Spawn an inventory slot UI element
+    fn inventory_slot(&mut self, slot: &InventorySlot) -> EntityCommands;
+
+    /// Spawn a complete inventory UI
+    fn inventory(&mut self, inventory: &Inventory) -> EntityCommands;
 }
 
 impl<T: Spawn> Widgets for T {
@@ -112,6 +122,81 @@ impl<T: Spawn> Widgets for T {
         });
         entity
     }
+
+    fn inventory_slot(&mut self, slot: &InventorySlot) -> EntityCommands {
+        let mut entity = self.spawn((
+            Name::new("Inventory Slot"),
+            NodeBundle {
+                style: Style {
+                    width: Px(50.0),
+                    height: Px(50.0),
+                    border: UiRect::all(Px(1.0)),
+                    ..default()
+                },
+                background_color: BackgroundColor(NODE_BACKGROUND),
+                ..default()
+            },
+        ));
+
+        entity.with_children(|children| {
+            if let Some(resource_type) = &slot.resource_type {
+                children.spawn((
+                    Name::new("Resource Type"),
+                    TextBundle::from_section(
+                        format!("{:?}", resource_type),
+                        TextStyle {
+                            font_size: 12.0,
+                            color: LABEL_TEXT,
+                            ..default()
+                        },
+                    ),
+                ));
+            }
+            children.spawn((
+                Name::new("Quantity"),
+                TextBundle::from_section(
+                    slot.quantity.to_string(),
+                    TextStyle {
+                        font_size: 16.0,
+                        color: LABEL_TEXT,
+                        ..default()
+                    },
+                ),
+            ));
+        });
+
+        entity
+    }
+
+    fn inventory(&mut self, inventory: &Inventory) -> EntityCommands {
+        let mut entity = self.spawn((
+            Name::new("Inventory"),
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Row,
+                    flex_wrap: FlexWrap::Wrap,
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    position_type: PositionType::Absolute,
+                    bottom: Percent(0.0),
+                    left: Percent(10.0),
+                    right: Percent(10.0),
+                    height: Percent(10.0),
+                    ..default()
+                },
+                background_color: BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
+                ..default()
+            },
+        ));
+
+        entity.with_children(|children| {
+            for slot in &inventory.slots {
+                children.inventory_slot(slot);
+            }
+        });
+
+        entity
+    }
 }
 
 /// An extension trait for spawning UI containers.
@@ -138,6 +223,7 @@ impl Containers for Commands<'_, '_> {
                 },
                 ..default()
             },
+            UiRoot,
         ))
     }
 }

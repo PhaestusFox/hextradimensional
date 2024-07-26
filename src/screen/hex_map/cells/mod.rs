@@ -13,7 +13,7 @@ mod ops;
 pub use iterators::*;
 use strum::IntoEnumIterator;
 
-use crate::screen::HexDirection;
+use crate::screen::MapDirection;
 
 use super::hex_util::{HEX_SIZE, HEX_SPACING, SQR_3, SQR_3_DIV_THREE, SQR_3_DIV_TWO};
 
@@ -104,37 +104,37 @@ pub(crate) fn update_transforms(mut hexagons: Query<(&mut Transform, &HexId), Ch
 const TWO_THIRDS_PI: f32 = PI * 2.0 / 3.0;
 const ONE_THIRD_PI: f32 = PI / 3.0;
 
-impl HexDirection {
+impl MapDirection {
     pub const fn direction(&self) -> HexId {
         match self {
-            HexDirection::Down => HexId::new(0, -1),
-            HexDirection::East => HexId::new(1, -1),
-            HexDirection::North => HexId::new(1, 0),
-            HexDirection::Up => HexId::new(0, 1),
-            HexDirection::West => HexId::new(-1, 1),
-            HexDirection::South => HexId::new(-1, 0),
+            MapDirection::Down => HexId::new(0, -1),
+            MapDirection::East => HexId::new(1, -1),
+            MapDirection::North => HexId::new(1, 0),
+            MapDirection::Up => HexId::new(0, 1),
+            MapDirection::West => HexId::new(-1, 1),
+            MapDirection::South => HexId::new(-1, 0),
         }
     }
 
-    pub const fn next(&self) -> HexDirection {
+    pub const fn next(&self) -> MapDirection {
         match self {
-            HexDirection::Down => HexDirection::East,
-            HexDirection::East => HexDirection::North,
-            HexDirection::North => HexDirection::Up,
-            HexDirection::Up => HexDirection::West,
-            HexDirection::West => HexDirection::South,
-            HexDirection::South => HexDirection::Down,
+            MapDirection::Down => MapDirection::East,
+            MapDirection::East => MapDirection::North,
+            MapDirection::North => MapDirection::Up,
+            MapDirection::Up => MapDirection::West,
+            MapDirection::West => MapDirection::South,
+            MapDirection::South => MapDirection::Down,
         }
     }
 
     pub fn angle(&self) -> f32 {
         match self {
-            HexDirection::Down => -PI,
-            HexDirection::East => -TWO_THIRDS_PI,
-            HexDirection::North => -ONE_THIRD_PI,
-            HexDirection::Up => 0.0,
-            HexDirection::West => ONE_THIRD_PI,
-            HexDirection::South => TWO_THIRDS_PI,
+            MapDirection::Down => -PI,
+            MapDirection::East => -TWO_THIRDS_PI,
+            MapDirection::North => -ONE_THIRD_PI,
+            MapDirection::Up => 0.0,
+            MapDirection::West => ONE_THIRD_PI,
+            MapDirection::South => TWO_THIRDS_PI,
         }
     }
 }

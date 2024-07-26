@@ -4,7 +4,7 @@ pub struct Cursor;
 use super::cells::HexId;
 use super::hex_util::HEX_SIZE;
 use crate::game::spawn::player::Player;
-use crate::screen::HexDirection;
+use crate::screen::MapDirection;
 use crate::screen::Screen;
 use bevy::prelude::*;
 use strum::IntoEnumIterator;
@@ -21,7 +21,7 @@ impl Plugin for CursorPlugin {
 
 fn spawn_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
-        HexDirection::Down,
+        MapDirection::Down,
         Name::new("Cursor"),
         HexId::new(0, 0),
         Cursor,
@@ -46,7 +46,7 @@ fn clear_cursor(mut commands: Commands, cursor: Query<Entity, With<Cursor>>) {
 fn move_cursor(
     player: Query<&Transform, With<Player>>,
     mut cursors: Query<
-        (&mut HexId, &mut Transform, &mut HexDirection),
+        (&mut HexId, &mut Transform, &mut MapDirection),
         (With<Cursor>, Without<Player>),
     >,
 ) {
@@ -56,11 +56,11 @@ fn move_cursor(
         if &id != cursor.as_ref() {
             *cursor = id;
         }
-        let mut direction = HexDirection::Down;
-        let mut distance = (id + HexDirection::Down)
+        let mut direction = MapDirection::Down;
+        let mut distance = (id + MapDirection::Down)
             .xyz()
             .distance_squared(player.translation);
-        for neighbor in HexDirection::iter() {
+        for neighbor in MapDirection::iter() {
             let next = ((id + neighbor).xyz() / 2.).distance_squared(player.translation);
             if next < distance {
                 distance = next;

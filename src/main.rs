@@ -3,9 +3,11 @@
 
 use bevy::prelude::*;
 use bevy_quickstart::AppPlugin;
+use bevy_save::prelude::*;
 
 fn main() -> AppExit {
     App::new()
-    .add_plugins(AppPlugin)
-    .run()
+        .add_plugins(AppPlugin)
+        .add_plugins(SavePlugin)
+        .run()
 }

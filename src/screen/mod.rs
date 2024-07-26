@@ -5,7 +5,7 @@ mod hex_map;
 mod loading;
 mod splash;
 mod title;
-mod voxel_world;
+pub mod voxel_world;
 
 use bevy::prelude::*;
 
@@ -24,7 +24,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.insert_resource(HexSelect {
         hex_id: Vec2::new(0.0, 0.0),
-        direction: HexDirection::Up,
+        direction: MapDirection::Up,
     });
 }
 
@@ -43,8 +43,8 @@ pub enum Screen {
 
 /// This represents the edges of the hexagon mapping to the voxel world.
 /// The Direction with reference to the hexagon is in clockwise order for the enum, starting from the top edge.
-#[derive(Clone, Copy, PartialEq, strum_macros::EnumIter, Debug, Component)]
-pub enum HexDirection {
+#[derive(Clone, Copy, PartialEq, strum_macros::EnumIter, Debug, Component, Eq, Hash)]
+pub enum MapDirection {
     Up,
     North,
     East,
@@ -57,5 +57,5 @@ pub enum HexDirection {
 #[derive(Resource, Debug)]
 pub struct HexSelect {
     pub hex_id: Vec2,
-    pub direction: HexDirection,
+    pub direction: MapDirection,
 }

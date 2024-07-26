@@ -1,9 +1,9 @@
-use super::{HexDirection, HexId};
+use super::{MapDirection, HexId};
 use core::ops::{Add, AddAssign};
 
-impl Add<HexDirection> for HexId {
+impl Add<MapDirection> for HexId {
     type Output = HexId;
-    fn add(self, rhs: HexDirection) -> Self::Output {
+    fn add(self, rhs: MapDirection) -> Self::Output {
         self + rhs.direction()
     }
 }
@@ -22,8 +22,8 @@ impl AddAssign for HexId {
     }
 }
 
-impl AddAssign<HexDirection> for HexId {
-    fn add_assign(&mut self, rhs: HexDirection) {
+impl AddAssign<MapDirection> for HexId {
+    fn add_assign(&mut self, rhs: MapDirection) {
         *self += rhs.direction();
     }
 }

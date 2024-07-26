@@ -5,7 +5,7 @@
 
 pub mod interaction;
 pub mod palette;
-mod widgets;
+pub mod widgets;
 
 pub mod prelude {
     pub use super::{

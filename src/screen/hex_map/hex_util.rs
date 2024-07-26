@@ -21,7 +21,7 @@ use crate::screen::{
         cells::{self, CellIcons, HexId, HexagonType},
         cursor,
     },
-    Direction, HexDirection, HexSelect, Screen,
+    Direction, HexSelect, MapDirection, Screen,
 };
 
 pub fn spawn_test_grid(mut commands: Commands, icons: Res<CellIcons>) {
@@ -49,7 +49,7 @@ pub fn spawn_test_grid(mut commands: Commands, icons: Res<CellIcons>) {
 
 pub fn go_to_voxel(
     input: Res<ButtonInput<KeyCode>>,
-    cursor: Query<(&HexId, &HexDirection), With<cursor::Cursor>>,
+    cursor: Query<(&HexId, &MapDirection), With<cursor::Cursor>>,
     hexes: Query<(&HexId, &HexagonType)>,
     mut hex_select: ResMut<HexSelect>,
     mut next_screen: ResMut<NextState<Screen>>,

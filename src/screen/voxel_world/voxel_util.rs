@@ -1,51 +1,54 @@
-use crate::screen::{voxel_world::player_controller::VoxelCamera, HexDirection, HexSelect, Screen};
+use crate::screen::{voxel_world::player_controller::VoxelCamera, HexSelect, MapDirection, Screen};
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier3d::prelude::*;
 use rand::{Rng, SeedableRng};
 use strum::IntoEnumIterator;
 
+use super::{inventory::Inventory, BlockType};
+
 pub struct VoxelPlugin;
 
 impl Plugin for VoxelPlugin {
     fn build(&self, app: &mut App) {
-        app
-        .init_resource::<Blocks>()
-        .add_plugins(VoxelCamera);
+        app.init_resource::<Blocks>().add_plugins(VoxelCamera);
     }
 }
 
+/// This describes the main player in the voxel world
 #[derive(Component)]
 pub struct VoxelPlayer;
 
-pub fn spawn_voxel_map(
-    mut commands: Commands,
-    blocks: Res<Blocks>,
-    hex_select: Res<HexSelect>,
-) {
-    commands.spawn((
-        StateScoped(Screen::VoxelWorld),
-        SpatialBundle {
-            transform: Transform::from_translation(pos_from_enter(&hex_select.direction)),
-            ..Default::default()
-        },
-        RigidBody::Dynamic,
-        LockedAxes::ROTATION_LOCKED,
-        Collider::capsule_y(0.5, 0.45),
-        KinematicCharacterControllerOutput::default(),
-        bevy_rapier3d::control::KinematicCharacterController {
-            ..Default::default()
-        },
-    )).with_children(|p| {p.spawn((
-        VoxelPlayer,
-        Camera3dBundle {
-            camera: Camera {
-                order: 1,
+pub fn spawn_voxel_map(mut commands: Commands, blocks: Res<Blocks>, hex_select: Res<HexSelect>) {
+    commands
+        .spawn((
+            StateScoped(Screen::VoxelWorld),
+            SpatialBundle {
+                transform: Transform::from_translation(pos_from_enter(&hex_select.direction)),
                 ..Default::default()
             },
-            transform: Transform::from_translation(Vec3::Y * 0.5),
-            ..Default::default()
-        },
-    ));});
+            RigidBody::Dynamic,
+            LockedAxes::ROTATION_LOCKED,
+            Collider::capsule_y(0.5, 0.45),
+            KinematicCharacterControllerOutput::default(),
+            bevy_rapier3d::control::KinematicCharacterController {
+                ..Default::default()
+            },
+        ))
+        .with_children(|p| {
+            p.spawn((
+                VoxelPlayer,
+                Inventory::new(10),
+                Camera3dBundle {
+                    camera: Camera {
+                        order: 1,
+                        ..Default::default()
+                    },
+                    transform: Transform::from_translation(Vec3::Y * 0.5),
+                    ..Default::default()
+                },
+            ));
+        });
+
     fill_world(
         commands,
         hex_select.hex_id,
@@ -54,14 +57,14 @@ pub fn spawn_voxel_map(
     );
 }
 
-fn pos_from_enter(direction: &HexDirection) -> Vec3 {
+fn pos_from_enter(direction: &MapDirection) -> Vec3 {
     match direction {
-        HexDirection::Down => Vec3::new(8., 0., 8.),
-        HexDirection::North => Vec3::new(16., 8., 8.),
-        HexDirection::East => Vec3::new(8., 8., 16.),
-        HexDirection::Up => Vec3::new(8., 16., 8.),
-        HexDirection::South => Vec3::new(0., 8., 8.),
-        HexDirection::West => Vec3::new(8., 8., 0.),
+        MapDirection::Down => Vec3::new(8., 0., 8.),
+        MapDirection::North => Vec3::new(16., 8., 8.),
+        MapDirection::East => Vec3::new(8., 8., 16.),
+        MapDirection::Up => Vec3::new(8., 16., 8.),
+        MapDirection::South => Vec3::new(0., 8., 8.),
+        MapDirection::West => Vec3::new(8., 8., 0.),
     }
 }
 
@@ -142,12 +145,7 @@ impl WorldType {
     }
 }
 
-fn fill_world(
-    mut commands: Commands,
-    id: Vec2,
-    world_type: WorldType,
-    blocks: &Blocks,
-) {
+fn fill_world(mut commands: Commands, id: Vec2, world_type: WorldType, blocks: &Blocks) {
     if world_type == WorldType::Empty {
         return;
     }
@@ -156,6 +154,7 @@ fn fill_world(
         for y in 0..16 {
             for z in 0..16 {
                 let block = world_type.sample(&mut rng, IVec3::new(x, y, z));
+                let solidity = block.is_solid();
                 let mut entity = commands.spawn((
                     StateScoped(Screen::VoxelWorld),
                     PbrBundle {
@@ -167,19 +166,12 @@ fn fill_world(
                         ..Default::default()
                     },
                 ));
-                if block.is_solid() {
+                if solidity {
                     entity.insert(Collider::cuboid(0.5, 0.5, 0.5));
                 }
             }
         }
     }
-}
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, strum_macros::EnumIter)]
-enum BlockType {
-    Air,
-    Stone,
-    Coal,
 }
 
 impl BlockType {
@@ -188,6 +180,8 @@ impl BlockType {
             BlockType::Air => "", // ! To fix
             BlockType::Stone => "images/voxels/stone.png",
             BlockType::Coal => "images/voxels/coal.png",
+            BlockType::Voxel(_) => "",
+            BlockType::MultiVoxel(_) => "",
         }
     }
 
@@ -196,6 +190,8 @@ impl BlockType {
             BlockType::Air => false,
             BlockType::Stone => true,
             BlockType::Coal => true,
+            BlockType::Voxel(_) => false,
+            BlockType::MultiVoxel(_) => false,
         }
     }
 }
@@ -226,10 +222,11 @@ impl FromWorld for Blocks {
         let asset_server = world.resource::<AssetServer>().clone();
         let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
         for block in BlockType::iter() {
+            let texture_path = block.texture_path();
             blocks.textures.insert(
                 block,
                 materials.add(StandardMaterial {
-                    base_color_texture: Some(asset_server.load(block.texture_path())),
+                    base_color_texture: Some(asset_server.load(texture_path)),
                     ..Default::default()
                 }),
             );
