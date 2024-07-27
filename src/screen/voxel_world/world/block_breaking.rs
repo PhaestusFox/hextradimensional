@@ -17,9 +17,8 @@ pub(crate) fn block_breaking_plugin(app: &mut App) {
     {
         app.init_resource::<BlockBreakDebugSettings>();
         app.register_type::<BlockBreakDebugSettings>();
-        app.add_systems(Update, draw_debug);
-        app.add_systems(Update, scail_breaking_block)
-        .add_systems(FixedUpdate, break_block);
+        app.add_systems(Update, draw_debug)
+        .add_systems(Update, (break_block, scail_breaking_block, pickup_block).chain());
     }
 }
 
@@ -38,19 +37,21 @@ fn draw_debug(
 
 fn break_block(
     mut commands: Commands,
+    input: Res<ButtonInput<MouseButton>>,
     physics: Res<RapierContext>,
-    mut player: Query<(&GlobalTransform, &mut Inventory), With<VoxelPlayer>>,
-    mut voxels: Query<(Option<&mut Breaking>, &BlockType)>
+    player: Query<&GlobalTransform, With<VoxelPlayer>>,
+    mut voxels: Query<Option<&mut Breaking>, With<BlockType>>
 ) {
-    for (player, mut inventory) in &mut player {
+    if !input.just_pressed(MouseButton::Left) {return;}
+    for player in &player {
         if let Some((hit, _)) = physics.cast_ray(player.translation(), player.forward().as_vec3(), 3., false, QueryFilter::only_fixed()) {
             match voxels.get_mut(hit) {
-                Ok((None, _)) => {
+                Ok(None) => {
                     commands.entity(hit).insert(Breaking(false));
                 },
-                Ok((Some(mut breaking), voxel)) => {
+                Ok(Some(mut breaking)) => {
                     if breaking.0 {
-                        inventory.add_resource(voxel.clone(), 1);
+                        continue;
                     } else {    
                         breaking.0 = true;
                     }
@@ -63,12 +64,27 @@ fn break_block(
     }
 }
 
+fn pickup_block(
+    mut commands: Commands,
+    mut player: Query<&mut Inventory, With<VoxelPlayer>>,
+    blocks: Query<(Entity, &BlockType, &Breaking), Changed<Breaking>>,
+) {
+    for mut inventory in &mut player {
+        for (entity, block, state) in &blocks {
+            if state.0 {
+                inventory.add_resource(block.clone(), 1);
+                commands.entity(entity).despawn_recursive();
+            }
+        }
+    }
+}
+
 fn scail_breaking_block(
     mut blocks: Query<(&mut Transform, &Breaking), Changed<Breaking>>,
 ) {
     for (mut transform, breaking) in &mut blocks {
         if breaking.0 {
-            transform.scale = Vec3::ZERO;
+            transform.scale = Vec3::ONE * 0.01;
         } else {
             transform.scale = Vec3::ONE * 0.5;
         }

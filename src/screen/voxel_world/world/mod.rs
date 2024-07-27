@@ -104,28 +104,34 @@ fn fill_world(
     commands: &mut Commands,
     blocks: &Blocks
 ) {
-    for x in 0..CHUNK_SIZE {
-        for y in 0..CHUNK_SIZE {
-            for z in 0..CHUNK_SIZE {
-                let block = &chunk.get(IVec3::new(x as i32, y as i32, z as i32));
-                let solidity = block.is_solid();
-                let mut entity = commands.spawn((
-                    StateScoped(crate::screen::Screen::VoxelWorld),
-                    PbrBundle {
-                        mesh: blocks.mesh(block),
-                        material: blocks.texture(block),
-                        transform: Transform::from_translation(Vec3::new(
-                            x as f32, y as f32, z as f32,
-                        )),
-                        ..Default::default()
-                    },
-                ));
-                if solidity {
-                    entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+    commands.spawn((
+        SpatialBundle::default(),
+        Name::new("Chunk"),
+        StateScoped(crate::screen::Screen::VoxelWorld),
+    )).with_children(|commands| {
+        for x in 0..CHUNK_SIZE {
+            for y in 0..CHUNK_SIZE {
+                for z in 0..CHUNK_SIZE {
+                    let block = &chunk.get(IVec3::new(x as i32, y as i32, z as i32));
+                    let solidity = block.is_solid();
+                    let mut entity = commands.spawn((
+                        block.clone(),
+                        PbrBundle {
+                            mesh: blocks.mesh(block),
+                            material: blocks.texture(block),
+                            transform: Transform::from_translation(Vec3::new(
+                                x as f32, y as f32, z as f32,
+                            )),
+                            ..Default::default()
+                        },
+                    ));
+                    if solidity {
+                        entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+                    }
                 }
             }
         }
-    }
+    });
 }
 
 fn fill_world_after_load(
