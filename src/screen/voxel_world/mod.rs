@@ -8,10 +8,10 @@ pub mod world;
 use super::{MapDirection, Screen};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use player_controller::spawn_player;
 use inventory::Inventory;
+use player_controller::spawn_player;
 use std::sync::Arc;
-use ui::{cleanup_inventory_ui, setup_inventory_ui, update_inventory_ui, toggle_full_inventory};
+use ui::{cleanup_inventory_ui, setup_inventory_ui, toggle_full_inventory, update_inventory_ui};
 use voxel_util::Blocks;
 
 pub(super) fn plugin(app: &mut App) {
@@ -23,7 +23,10 @@ pub(super) fn plugin(app: &mut App) {
             setup_inventory_ui.after(spawn_player),
         ),
     );
-    app.add_systems(Update, update_inventory_ui.run_if(in_state(Screen::VoxelWorld)));
+    app.add_systems(
+        Update,
+        update_inventory_ui.run_if(in_state(Screen::VoxelWorld)),
+    );
     app.add_systems(
         OnExit(Screen::VoxelWorld),
         (exit_playing, cleanup_inventory_ui),
@@ -40,6 +43,7 @@ pub(super) fn plugin(app: &mut App) {
         toggle_full_inventory
             .run_if(in_state(Screen::VoxelWorld).and_then(input_just_pressed(KeyCode::KeyT))),
     );
+    app.add_systems(Update, update_inventory_ui);
     app.init_resource::<Blocks>();
     app.add_plugins(player_controller::VoxelCamera);
     app.register_type::<Inventory>();
@@ -117,6 +121,19 @@ impl BlockType {
             BlockType::IronOre => true,
             BlockType::IronBlock => true,
             BlockType::Furnace => true,
+        }
+    }
+
+    const fn mesh_path(&self) -> Option<&'static str> {
+        match self {
+            BlockType::Air => None,
+            BlockType::Stone => None,
+            BlockType::Coal => None,
+            BlockType::Voxel(_) => None,
+            BlockType::MultiVoxel(_) => None,
+            BlockType::IronOre => None,
+            BlockType::IronBlock => None,
+            BlockType::Furnace => Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0"),
         }
     }
 }

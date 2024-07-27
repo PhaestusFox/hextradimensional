@@ -72,7 +72,7 @@ impl WorldType {
                 } else {
                     BlockType::Air
                 }
-            },
+            }
             WorldType::Coal => {
                 if rng.gen_bool(0.3) && pos.y != 0 {
                     BlockType::Air
@@ -81,7 +81,7 @@ impl WorldType {
                 } else {
                     BlockType::Stone
                 }
-            },
+            }
             WorldType::Iron => {
                 if rng.gen_bool(0.3) && pos.y != 0 {
                     BlockType::Air
@@ -124,47 +124,6 @@ fn fill_world(mut commands: Commands, id: HexId, world_type: WorldType, blocks: 
     }
 }
 
-impl BlockType {
-    const fn texture_path(&self) -> &'static str {
-        match self {
-            BlockType::Air => "", // ! To fix
-            BlockType::Stone => "images/voxels/stone.png",
-            BlockType::Coal => "images/voxels/coal.png",
-            BlockType::Voxel(_) => "",
-            BlockType::MultiVoxel(_) => "",
-            BlockType::IronOre => "images/voxels/ore_iron.png",
-            BlockType::IronBlock => "images/voxels/refined_iron.png",
-            BlockType::Furnace => "images/multi_blocks/furnace.png",
-        }
-    }
-
-    const fn mesh_path(&self) -> Option<&'static str> {
-        match self {
-            BlockType::Air => None,
-            BlockType::Stone => None,
-            BlockType::Coal => None,
-            BlockType::Voxel(_) => None,
-            BlockType::MultiVoxel(_) => None,
-            BlockType::IronOre => None,
-            BlockType::IronBlock => None,
-            BlockType::Furnace => Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0")
-        }
-    }
-
-    pub const fn is_solid(&self) -> bool {
-        match self {
-            BlockType::Air => false,
-            BlockType::Stone => true,
-            BlockType::Coal => true,
-            BlockType::Voxel(_) => false,
-            BlockType::MultiVoxel(_) => false,
-            BlockType::IronBlock => true,
-            BlockType::IronOre => true,
-            BlockType::Furnace => true,
-        }
-    }
-}
-
 #[derive(Resource)]
 pub struct Blocks {
     meshs: HashMap<BlockType, Handle<Mesh>>,
@@ -187,27 +146,28 @@ impl FromWorld for Blocks {
             textures: HashMap::default(),
         };
         let asset_server = world.resource::<AssetServer>().clone();
-        let mut materials = world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
-            let mut meshes = world.resource_mut::<Assets<Mesh>>();
-            let default = meshes.add(Cuboid::from_length(1.));
-            for block in BlockType::iter() {
-                let texture_path = block.texture_path();
-                let mesh_path = block.mesh_path();
-                blocks.textures.insert(
-                    block.clone(),
-                    materials.add(StandardMaterial {
-                        base_color_texture: Some(asset_server.load(texture_path)),
-                        ..Default::default()
-                    }),
-                );
-                if let Some(mesh) = mesh_path {
-                    blocks.meshs.insert(block, asset_server.load(mesh));
-                } else {
-                    blocks.meshs.insert(block, default.clone());
+        let mut materials =
+            world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
+                let mut meshes = world.resource_mut::<Assets<Mesh>>();
+                let default = meshes.add(Cuboid::from_length(1.));
+                for block in BlockType::iter() {
+                    let texture_path = block.texture_path();
+                    let mesh_path = block.mesh_path();
+                    blocks.textures.insert(
+                        block.clone(),
+                        materials.add(StandardMaterial {
+                            base_color_texture: Some(asset_server.load(texture_path)),
+                            ..Default::default()
+                        }),
+                    );
+                    if let Some(mesh) = mesh_path {
+                        blocks.meshs.insert(block, asset_server.load(mesh));
+                    } else {
+                        blocks.meshs.insert(block, default.clone());
+                    }
                 }
-            }
-        });
-            
+            });
+
         blocks
     }
 }

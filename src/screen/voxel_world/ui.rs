@@ -29,10 +29,6 @@ pub fn cleanup_inventory_ui(mut commands: Commands, ui_query: Query<Entity, With
 
 pub fn toggle_full_inventory(
     mut inventory_ui_query: Query<(Entity, &mut Visibility), With<FullInventoryUI>>,
-pub fn update_inventory_ui(
-    mut commands: Commands,
-    player_query: Query<&Inventory, Changed<Inventory>>,
-    ui_root_query: Query<Entity, With<UiRoot>>, // Assuming you have a UiRoot component
 ) {
     if let Ok((_, mut visibility)) = inventory_ui_query.get_single_mut() {
         // Toggle visibility of existing inventory UI
@@ -40,5 +36,21 @@ pub fn update_inventory_ui(
             Visibility::Visible => Visibility::Hidden,
             _ => Visibility::Visible,
         };
+    }
+}
+
+pub fn update_inventory_ui(
+    mut commands: Commands,
+    player_query: Query<(&Inventory, &VoxelPlayer)>,
+    ui_root_query: Query<Entity, With<UiRoot>>, // Assuming you have a UiRoot component
+    server: Res<AssetServer>,
+) {
+    if let Ok(_) = player_query.get_single() {
+        if let Ok(ui_root) = ui_root_query.get_single() {
+            // Remove the old inventory UI
+            commands.entity(ui_root).despawn_descendants();
+            // Spawn the new inventory UI
+            setup_inventory_ui(commands, player_query, server);
+        }
     }
 }
