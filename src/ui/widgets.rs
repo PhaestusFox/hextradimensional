@@ -263,7 +263,7 @@ impl<T: Spawn> Widgets for T {
                     grid_template_rows: RepeatedGridTrack::flex(6, 1.0),
                     justify_content: JustifyContent::SpaceAround,
                     position_type: PositionType::Absolute,
-                    bottom: Percent(15.0),
+                    bottom: Percent(25.0),
                     left: Percent(10.0),
                     right: Percent(10.0),
                     height: Percent(60.0),

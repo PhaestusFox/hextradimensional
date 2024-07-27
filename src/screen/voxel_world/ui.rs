@@ -28,19 +28,13 @@ pub fn cleanup_inventory_ui(mut commands: Commands, ui_query: Query<Entity, With
 }
 
 pub fn toggle_full_inventory(
-    ui_root_query: Query<Entity, With<UiRoot>>,
     mut inventory_ui_query: Query<(Entity, &mut Visibility), With<FullInventoryUI>>,
 ) {
-    if let Ok(ui_root) = ui_root_query.get_single() {
-        match inventory_ui_query.get_single_mut() {
-            Ok((_, mut visibility)) => {
-                // Toggle visibility of existing inventory UI
-                *visibility = match *visibility {
-                    Visibility::Visible => Visibility::Hidden,
-                    _ => Visibility::Visible,
-                };
-            }
-            Err(_) => {}
-        }
+    if let Ok((_, mut visibility)) = inventory_ui_query.get_single_mut() {
+        // Toggle visibility of existing inventory UI
+        *visibility = match *visibility {
+            Visibility::Visible => Visibility::Hidden,
+            _ => Visibility::Visible,
+        };
     }
 }

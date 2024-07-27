@@ -1,16 +1,21 @@
-use std::io::{Error, ErrorKind, Read};
+use std::io::{Error, ErrorKind};
 
-use block_breaking::block_breaking_plugin;
+use crate::screen::{hex_map::cells::HexId, HexSelect, Screen};
 use bevy::{
-    asset::{io::{
-        AssetReader, AssetReaderError, AssetSource, AssetSourceId, AsyncReadAndSeek, ErasedAssetReader, PathStream, Reader
-    }, AssetLoader, AsyncReadExt},
-    prelude::*, tasks::futures_lite::{AsyncRead, AsyncSeek},
+    asset::{
+        io::{AssetReader, AssetReaderError, ErasedAssetReader, Reader},
+        AssetLoader, AsyncReadExt,
+    },
+    prelude::*,
+    tasks::futures_lite::{AsyncRead, AsyncSeek},
 };
+use block_breaking::block_breaking_plugin;
 use rand::SeedableRng;
-use crate::screen::{hex_map::cells::{HexId, HexagonType}, HexSelect, Screen};
 
-use super::{voxel_util::{Blocks, WorldType}, BlockType};
+use super::{
+    voxel_util::{Blocks, WorldType},
+    BlockType,
+};
 
 pub mod block_breaking;
 pub mod multi_block;
@@ -42,17 +47,25 @@ impl VoxelChunk {
     }
 
     pub fn set(&mut self, pos: IVec3, block: BlockType) -> BlockType {
-        if pos.x >= CHUNK_SIZE as i32 || pos.x < 0 || pos.y >= CHUNK_SIZE as i32 || pos.y < 0 || pos.z >= CHUNK_SIZE as i32 || pos.z < 0 {
+        if pos.x >= CHUNK_SIZE as i32
+            || pos.x < 0
+            || pos.y >= CHUNK_SIZE as i32
+            || pos.y < 0
+            || pos.z >= CHUNK_SIZE as i32
+            || pos.z < 0
+        {
             return BlockType::Air;
         }
-        let index = pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
+        let index =
+            pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
         let old = self.0[index].clone();
         self.0[index] = block;
         old
     }
 
     pub fn get(&self, pos: IVec3) -> BlockType {
-        let index = pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
+        let index =
+            pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
         self.0[index].clone()
     }
 }
@@ -65,11 +78,8 @@ pub(crate) fn voxel_world(app: &mut App) {
     app.add_systems(PreUpdate, load_chunk.run_if(resource_changed::<HexSelect>));
 }
 
-fn load_chunk(
-    mut hex: ResMut<HexSelect>,
-    asset_server: Res<AssetServer>,
-) {
-    let world = hex.world.clone();
+fn load_chunk(mut hex: ResMut<HexSelect>, asset_server: Res<AssetServer>) {
+    let world = hex.world;
     let id = hex.hex_id;
     hex.chunk = asset_server.load_with_settings(format!("chunk://{}", id), move |w| *w = world)
 }
@@ -83,7 +93,7 @@ fn fill_world(
     for event in event.read() {
         match event {
             AssetEvent::Added { id } => {
-                let chunk = chunks.get(id.clone()).expect("just loaded");
+                let chunk = chunks.get(*id).expect("just loaded");
                 for x in 0..CHUNK_SIZE {
                     for y in 0..CHUNK_SIZE {
                         for z in 0..CHUNK_SIZE {
@@ -101,15 +111,17 @@ fn fill_world(
                                 },
                             ));
                             if solidity {
-                                entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+                                entity.insert(bevy_rapier3d::prelude::Collider::cuboid(
+                                    0.5, 0.5, 0.5,
+                                ));
                             }
                         }
                     }
                 }
-            },
-            AssetEvent::Modified { id } => {
+            }
+            AssetEvent::Modified { id: _ } => {
                 println!("Update changed to world");
-            },
+            }
             _ => {}
         }
     }
@@ -134,21 +146,28 @@ impl AssetLoader for VoxelChunkLoader {
         async {
             let mut data = Vec::new();
             match reader.read(&mut data).await {
-                Ok(_) => {
-                    return Err(std::io::Error::new(ErrorKind::Unsupported, "Loading not implemented gtfo of (1-1)"));
-                },
+                Ok(_) => Err(std::io::Error::new(
+                    ErrorKind::Unsupported,
+                    "Loading not implemented get out of (1-1)",
+                )),
                 Err(e) => {
                     if e.kind() == ErrorKind::NotFound {
-                        let file = load_context.path().file_name().ok_or(Error::new(ErrorKind::NotFound, "failed get file name"))?.to_string_lossy();
-                        let hex = file.trim().parse::<HexId>().or_else(|e| {
+                        let file = load_context
+                            .path()
+                            .file_name()
+                            .ok_or(Error::new(ErrorKind::NotFound, "failed get file name"))?
+                            .to_string_lossy();
+                        let hex = file.trim().parse::<HexId>().map_err(|e| {
                             println!("{e}");
-                            Err(std::io::Error::new(ErrorKind::NotFound, "failed to parse id"))
+                            std::io::Error::new(ErrorKind::NotFound, "failed to parse id")
                         })?;
-                        let mut rng = rand::rngs::StdRng::seed_from_u64(((hex.q() as u64) << 32) | hex.r() as u64);
+                        let mut rng = rand::rngs::StdRng::seed_from_u64(
+                            ((hex.q() as u64) << 32) | hex.r() as u64,
+                        );
                         let chunk = VoxelChunk::from_hex(settings, &mut rng);
-                        return Ok(chunk);
+                        Ok(chunk)
                     } else {
-                        return Err(e);
+                        Err(e)
                     }
                 }
             }
@@ -161,21 +180,24 @@ pub struct ChunkReader(pub Box<dyn ErasedAssetReader>);
 struct NotFoundReader;
 impl AsyncSeek for NotFoundReader {
     fn poll_seek(
-                self: std::pin::Pin<&mut Self>,
-                cx: &mut std::task::Context<'_>,
-                pos: std::io::SeekFrom,
-            ) -> std::task::Poll<std::io::Result<u64>> {
+        self: std::pin::Pin<&mut Self>,
+        _: &mut std::task::Context<'_>,
+        _: std::io::SeekFrom,
+    ) -> std::task::Poll<std::io::Result<u64>> {
         std::task::Poll::Ready(Ok(0))
     }
 }
 
 impl AsyncRead for NotFoundReader {
     fn poll_read(
-                self: std::pin::Pin<&mut Self>,
-                _cx: &mut std::task::Context<'_>,
-                _buf: &mut [u8],
-            ) -> std::task::Poll<std::io::Result<usize>> {
-        std::task::Poll::Ready(Err(std::io::Error::new(std::io::ErrorKind::NotFound, "Not Found")))
+        self: std::pin::Pin<&mut Self>,
+        _cx: &mut std::task::Context<'_>,
+        _buf: &mut [u8],
+    ) -> std::task::Poll<std::io::Result<usize>> {
+        std::task::Poll::Ready(Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Not Found",
+        )))
     }
 }
 
@@ -183,40 +205,39 @@ impl AssetReader for ChunkReader {
     async fn read<'a>(
         &'a self,
         path: &'a std::path::Path,
-    ) ->  Result<Box<Reader<'a>>, AssetReaderError> {
+    ) -> Result<Box<Reader<'a>>, AssetReaderError> {
         match self.0.read(path).await {
             Ok(reader) => Ok(reader),
             Err(e) => match e {
                 AssetReaderError::NotFound(_) => Ok(Box::new(NotFoundReader)),
-                e => Err(e)
+                e => Err(e),
             },
         }
     }
 
     fn read_meta<'a>(
         &'a self,
-        path: &'a std::path::Path,
-    ) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Box<bevy::asset::io::Reader<'a>>, bevy::asset::io::AssetReaderError>> {
-        async {
-            Err(bevy::asset::io::AssetReaderError::HttpError(404))
-        }
+        _: &'a std::path::Path,
+    ) -> impl bevy::utils::ConditionalSendFuture<
+        Output = Result<Box<bevy::asset::io::Reader<'a>>, bevy::asset::io::AssetReaderError>,
+    > {
+        async { Err(bevy::asset::io::AssetReaderError::HttpError(404)) }
     }
 
     fn read_directory<'a>(
         &'a self,
-        path: &'a std::path::Path,
-    ) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Box<bevy::asset::io::PathStream>, bevy::asset::io::AssetReaderError>> {
-        async {
-            Err(bevy::asset::io::AssetReaderError::HttpError(404))
-        }
+        _: &'a std::path::Path,
+    ) -> impl bevy::utils::ConditionalSendFuture<
+        Output = Result<Box<bevy::asset::io::PathStream>, bevy::asset::io::AssetReaderError>,
+    > {
+        async { Err(bevy::asset::io::AssetReaderError::HttpError(404)) }
     }
 
     fn is_directory<'a>(
         &'a self,
-        path: &'a std::path::Path,
-    ) -> impl bevy::utils::ConditionalSendFuture<Output = Result<bool, bevy::asset::io::AssetReaderError>> {
-        async {
-            Err(bevy::asset::io::AssetReaderError::HttpError(404))
-        }
+        _: &'a std::path::Path,
+    ) -> impl bevy::utils::ConditionalSendFuture<Output = Result<bool, bevy::asset::io::AssetReaderError>>
+    {
+        async { Err(bevy::asset::io::AssetReaderError::HttpError(404)) }
     }
 }
