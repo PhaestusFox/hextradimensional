@@ -41,7 +41,7 @@ pub fn toggle_full_inventory(
 
 pub fn update_inventory_ui(
     mut commands: Commands,
-    player_query: Query<&Inventory, With<VoxelPlayer>>,
+    player_query: Query<&Inventory, (With<VoxelPlayer>, Changed<Inventory>)>,
     ui_root_query: Query<Entity, With<UiRoot>>,
     asset_server: Res<AssetServer>,
 ) {
