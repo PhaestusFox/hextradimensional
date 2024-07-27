@@ -17,6 +17,9 @@ use super::{
     BlockType,
 };
 
+#[derive(Component)]
+struct VoxelId(pub IVec3);
+
 pub mod block_breaking;
 pub mod multi_block;
 pub mod cheats;
@@ -112,10 +115,11 @@ fn fill_world(
         for x in 0..CHUNK_SIZE {
             for y in 0..CHUNK_SIZE {
                 for z in 0..CHUNK_SIZE {
-                    let block = &chunk.get(IVec3::new(x as i32, y as i32, z as i32));
+                    let id = IVec3::new(x as i32, y as i32, z as i32);
+                    let block = &chunk.get(id);
                     let solidity = block.is_solid();
                     let mut entity = commands.spawn((
-                        block.clone(),
+                        VoxelId(id),
                         PbrBundle {
                             mesh: blocks.mesh(block),
                             material: blocks.texture(block),
