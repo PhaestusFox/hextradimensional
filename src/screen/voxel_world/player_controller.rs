@@ -1,11 +1,16 @@
-use crate::screen::{voxel_world::voxel_util::VoxelPlayer, Screen};
+use crate::screen::{voxel_world::voxel_util::VoxelPlayer, HexSelect, MapDirection, Screen};
 use bevy::{
     ecs::event::ManualEventReader,
     input::mouse::MouseMotion,
     prelude::*,
     window::{CursorGrabMode, PrimaryWindow},
 };
-use bevy_rapier3d::prelude::{KinematicCharacterController, KinematicCharacterControllerOutput};
+use bevy_rapier3d::prelude::{
+    Collider, KinematicCharacterController, KinematicCharacterControllerOutput, LockedAxes,
+    RigidBody,
+};
+
+use super::inventory::Inventory;
 
 pub struct VoxelCamera;
 
@@ -211,5 +216,52 @@ fn player_jump(
                 commands.entity(entity).insert(Jump { left: 3. });
             }
         }
+    }
+}
+
+fn pos_from_enter(direction: &MapDirection) -> Vec3 {
+    match direction {
+        MapDirection::Down => Vec3::new(8., 0., 8.),
+        MapDirection::North => Vec3::new(16., 8., 8.),
+        MapDirection::East => Vec3::new(8., 8., 16.),
+        MapDirection::Up => Vec3::new(8., 16., 8.),
+        MapDirection::South => Vec3::new(0., 8., 8.),
+        MapDirection::West => Vec3::new(8., 8., 0.),
+    }
+}
+
+pub fn spawn_player(mut commands: Commands, hex_select: Res<HexSelect>) {
+    let mut inventory = Inventory::new(60);
+    if inventory.add_resource(super::BlockType::Coal, 37) {
+        commands
+            .spawn((
+                VoxelPlayer,
+                inventory,
+                StateScoped(Screen::VoxelWorld),
+                SpatialBundle {
+                    transform: Transform::from_translation(pos_from_enter(&hex_select.direction)),
+                    ..Default::default()
+                },
+                RigidBody::Dynamic,
+                LockedAxes::ROTATION_LOCKED,
+                Collider::capsule_y(0.5, 0.45),
+                KinematicCharacterControllerOutput::default(),
+                bevy_rapier3d::control::KinematicCharacterController {
+                    ..Default::default()
+                },
+            ))
+            // This is the child camera
+            .with_children(|p| {
+                p.spawn((Camera3dBundle {
+                    camera: Camera {
+                        order: 1,
+                        ..Default::default()
+                    },
+                    transform: Transform::from_translation(Vec3::Y * 0.5),
+                    ..Default::default()
+                },));
+            });
+    } else {
+        panic!("Initial resource granting failed")
     }
 }

@@ -1,12 +1,12 @@
 use bevy::utils::hashbrown::HashSet;
-pub use offset::{Offset, WithOffset};
 pub use fill::FastFill;
+pub use offset::{Offset, WithOffset};
 pub use ring::{RingIter, SpiralIter};
 
 use super::HexId;
 
-mod offset;
 mod fill;
+mod offset;
 mod ring;
 
 pub trait Ranged: Iterator<Item = HexId> + WithOffset {
