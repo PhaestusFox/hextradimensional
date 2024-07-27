@@ -235,8 +235,6 @@ pub fn spawn_player(mut commands: Commands, hex_select: Res<HexSelect>) {
     if inventory.add_resource(super::BlockType::Coal, 37) {
         commands
             .spawn((
-                VoxelPlayer,
-                inventory,
                 StateScoped(Screen::VoxelWorld),
                 SpatialBundle {
                     transform: Transform::from_translation(pos_from_enter(&hex_select.direction)),
@@ -252,14 +250,18 @@ pub fn spawn_player(mut commands: Commands, hex_select: Res<HexSelect>) {
             ))
             // This is the child camera
             .with_children(|p| {
-                p.spawn((Camera3dBundle {
-                    camera: Camera {
-                        order: 1,
+                p.spawn((
+                    Camera3dBundle {
+                        camera: Camera {
+                            order: 1,
+                            ..Default::default()
+                        },
+                        transform: Transform::from_translation(Vec3::Y * 0.5),
                         ..Default::default()
                     },
-                    transform: Transform::from_translation(Vec3::Y * 0.5),
-                    ..Default::default()
-                },));
+                    VoxelPlayer,
+                    inventory,
+                ));
             });
     } else {
         panic!("Initial resource granting failed")
