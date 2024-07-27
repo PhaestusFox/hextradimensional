@@ -9,7 +9,7 @@ pub mod voxel_world;
 
 use bevy::prelude::*;
 use hex_map::cells::HexId;
-use voxel_world::{world::VoxelChunk, VoxelData};
+use voxel_world::world::VoxelChunk;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_state::<Screen>();

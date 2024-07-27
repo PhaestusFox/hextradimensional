@@ -9,9 +9,6 @@ const SEED: [u8; 32] = [
     0b01101100, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-use std::ops::DerefMut;
-
-use bevy::prelude::*;
 use rand::{seq::IteratorRandom, Rng, SeedableRng};
 use strum::IntoEnumIterator;
 // ! Fix test module
@@ -21,7 +18,7 @@ use crate::screen::{
         cells::{self, CellIcons, HexId, HexagonType},
         cursor,
     },
-    Direction, HexSelect, MapDirection, Screen,
+    HexSelect, MapDirection, Screen,
 };
 
 pub fn spawn_test_grid(mut commands: Commands, icons: Res<CellIcons>) {
@@ -69,7 +66,7 @@ pub fn go_to_voxel(
             hex_id: *cursor.0,
             direction: *cursor.1,
             world: hex_type.into(),
-            chunk: Handle::default()
+            chunk: Handle::default(),
         };
         // ! Fix type later
         //hex_type: hex_type as u8,

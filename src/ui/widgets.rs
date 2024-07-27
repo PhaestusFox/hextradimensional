@@ -1,9 +1,12 @@
 //! Helper traits for creating common widgets.
 
-use bevy::{ecs::system::EntityCommands, prelude::*, ui::Val::*};
+use bevy::{
+    ecs::system::EntityCommands, prelude::*, render::texture::TRANSPARENT_IMAGE_HANDLE, ui::Val::*,
+};
 
 use super::{interaction::InteractionPalette, palette::*};
 use crate::screen::voxel_world::inventory::{Inventory, InventorySlot};
+use crate::screen::voxel_world::ui::FullInventoryUI;
 
 // Define the UiRoot component
 #[derive(Component)]
@@ -20,10 +23,18 @@ pub trait Widgets {
     /// Spawn a simple text label.
     fn label(&mut self, text: impl Into<String>) -> EntityCommands;
     /// Spawn an inventory slot UI element
-    fn inventory_slot(&mut self, slot: &InventorySlot) -> EntityCommands;
+    fn inventory_slot(&mut self, slot: &InventorySlot, server: &Res<AssetServer>)
+        -> EntityCommands;
+
+    /// Spawn a hotbar inventory UI
+    fn hotbar(&mut self, inventory: &Inventory, server: &Res<AssetServer>) -> EntityCommands;
 
     /// Spawn a complete inventory UI
-    fn inventory(&mut self, inventory: &Inventory) -> EntityCommands;
+    fn full_inventory(
+        &mut self,
+        inventory: &Inventory,
+        server: &Res<AssetServer>,
+    ) -> EntityCommands;
 }
 
 impl<T: Spawn> Widgets for T {
@@ -123,17 +134,30 @@ impl<T: Spawn> Widgets for T {
         entity
     }
 
-    fn inventory_slot(&mut self, slot: &InventorySlot) -> EntityCommands {
+    /// This controls the styling for individual inventory slots
+    fn inventory_slot(
+        &mut self,
+        slot: &InventorySlot,
+        server: &Res<AssetServer>,
+    ) -> EntityCommands {
+        let image_handle: Handle<Image> = match &slot.resource_type {
+            Some(block_type) => server.load(block_type.texture_path()),
+            None => TRANSPARENT_IMAGE_HANDLE,
+        };
         let mut entity = self.spawn((
             Name::new("Inventory Slot"),
-            NodeBundle {
+            ImageBundle {
                 style: Style {
-                    width: Px(50.0),
-                    height: Px(50.0),
-                    border: UiRect::all(Px(1.0)),
+                    width: Percent(80.0),
+                    height: Percent(80.0),
+                    margin: UiRect::all(Val::Auto),
                     ..default()
                 },
-                background_color: BackgroundColor(NODE_BACKGROUND),
+                background_color: BackgroundColor(Color::srgb(0.8, 0.8, 0.8)),
+                image: UiImage {
+                    texture: image_handle,
+                    ..default()
+                },
                 ..default()
             },
         ));
@@ -142,41 +166,68 @@ impl<T: Spawn> Widgets for T {
             if let Some(resource_type) = &slot.resource_type {
                 children.spawn((
                     Name::new("Resource Type"),
-                    TextBundle::from_section(
-                        format!("{:?}", resource_type),
-                        TextStyle {
-                            font_size: 12.0,
-                            color: LABEL_TEXT,
+                    TextBundle {
+                        style: Style {
+                            position_type: PositionType::Absolute,
+                            bottom: Val::Percent(5.0),
+                            left: Val::Percent(5.0),
                             ..default()
                         },
-                    ),
+                        text: Text {
+                            sections: vec![TextSection {
+                                value: format!("{:?}", resource_type),
+                                style: TextStyle {
+                                    font_size: 12.0,
+                                    color: Color::srgb(0.0, 1.0, 1.0), // ! Have this change depending on resource type
+                                    ..default()
+                                },
+                            }],
+                            justify: JustifyText::Left,
+                            linebreak_behavior: bevy::text::BreakLineOn::WordBoundary,
+                        },
+                        ..default()
+                    },
                 ));
             }
             children.spawn((
                 Name::new("Quantity"),
-                TextBundle::from_section(
-                    slot.quantity.to_string(),
-                    TextStyle {
-                        font_size: 16.0,
-                        color: LABEL_TEXT,
+                TextBundle {
+                    style: Style {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Percent(5.0),
+                        right: Val::Percent(5.0),
                         ..default()
                     },
-                ),
+                    text: Text {
+                        sections: vec![TextSection {
+                            value: slot.quantity.to_string(),
+                            style: TextStyle {
+                                font_size: 16.0,
+                                color: Color::srgb(1.0, 1.0, 0.0), // ! Have this change depending on resource type
+                                ..default()
+                            },
+                        }],
+                        justify: JustifyText::Right,
+                        linebreak_behavior: bevy::text::BreakLineOn::WordBoundary,
+                    },
+                    ..default()
+                },
             ));
         });
 
         entity
     }
 
-    fn inventory(&mut self, inventory: &Inventory) -> EntityCommands {
+    /// This controls the styling for the inventory hotbar. The hotbar holds 10 items
+    fn hotbar(&mut self, inventory: &Inventory, server: &Res<AssetServer>) -> EntityCommands {
         let mut entity = self.spawn((
-            Name::new("Inventory"),
+            Name::new("Hotbar"),
             NodeBundle {
                 style: Style {
-                    flex_direction: FlexDirection::Row,
-                    flex_wrap: FlexWrap::Wrap,
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
+                    display: Display::Grid,
+                    grid_template_columns: vec![RepeatedGridTrack::flex(10, 1.0)], // 3 equal-width columns
+                    grid_template_rows: vec![RepeatedGridTrack::flex(1, 1.0)], // 2 equal-height rows
+                    justify_content: JustifyContent::SpaceAround,
                     position_type: PositionType::Absolute,
                     bottom: Percent(0.0),
                     left: Percent(10.0),
@@ -190,8 +241,44 @@ impl<T: Spawn> Widgets for T {
         ));
 
         entity.with_children(|children| {
-            for slot in &inventory.slots {
-                children.inventory_slot(slot);
+            for slot in inventory.slots.iter().take(10) {
+                children.inventory_slot(slot, server);
+            }
+        });
+
+        entity
+    }
+
+    fn full_inventory(
+        &mut self,
+        inventory: &Inventory,
+        server: &Res<AssetServer>,
+    ) -> EntityCommands {
+        let mut entity = self.spawn((
+            Name::new("Full Inventory"),
+            NodeBundle {
+                style: Style {
+                    display: Display::Grid,
+                    grid_template_columns: RepeatedGridTrack::flex(10, 1.0),
+                    grid_template_rows: RepeatedGridTrack::flex(6, 1.0),
+                    justify_content: JustifyContent::SpaceAround,
+                    position_type: PositionType::Absolute,
+                    bottom: Percent(25.0),
+                    left: Percent(10.0),
+                    right: Percent(10.0),
+                    height: Percent(60.0),
+                    ..default()
+                },
+                background_color: BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.8)),
+                visibility: Visibility::Hidden,
+                ..default()
+            },
+            FullInventoryUI,
+        ));
+
+        entity.with_children(|children| {
+            for slot in inventory.slots.iter().take(60) {
+                children.inventory_slot(slot, server);
             }
         });
 

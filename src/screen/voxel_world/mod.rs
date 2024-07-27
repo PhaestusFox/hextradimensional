@@ -1,25 +1,26 @@
 //! The screen state for the voxel world game loop.
 pub mod inventory;
 mod player_controller;
-pub mod world;
-mod ui;
+pub mod ui;
 pub mod voxel_util;
+pub mod world;
 
 use super::{MapDirection, Screen};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use player_controller::spawn_player;
 use inventory::Inventory;
 use std::sync::Arc;
-use ui::{cleanup_inventory_ui, setup_inventory_ui, update_inventory_ui};
-use voxel_util::{spawn_voxel_map, Blocks};
+use ui::{cleanup_inventory_ui, setup_inventory_ui, update_inventory_ui, toggle_full_inventory};
+use voxel_util::Blocks;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         OnEnter(Screen::VoxelWorld),
         (
             enter_playing,
-            spawn_voxel_map,
-            setup_inventory_ui.after(spawn_voxel_map),
+            spawn_player,
+            setup_inventory_ui.after(spawn_player),
         ),
     );
     app.add_systems(Update, update_inventory_ui.run_if(in_state(Screen::VoxelWorld)));
@@ -33,6 +34,11 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         return_to_hex_map
             .run_if(in_state(Screen::VoxelWorld).and_then(input_just_pressed(KeyCode::Escape))),
+    );
+    app.add_systems(
+        Update,
+        toggle_full_inventory
+            .run_if(in_state(Screen::VoxelWorld).and_then(input_just_pressed(KeyCode::KeyT))),
     );
     app.init_resource::<Blocks>();
     app.add_plugins(player_controller::VoxelCamera);
@@ -86,3 +92,25 @@ pub enum BlockType {
 }
 
 // For Multi-Voxel mixing ensure that if 2 voxels can be compressed into a singular one that they are resolved as a  single voxel, not a MultiVoxel
+
+impl BlockType {
+    pub const fn texture_path(&self) -> &'static str {
+        match self {
+            BlockType::Air => "", // ! To fix
+            BlockType::Stone => "images/voxels/stone.png",
+            BlockType::Coal => "images/voxels/coal.png",
+            BlockType::Voxel(_) => "",
+            BlockType::MultiVoxel(_) => "",
+        }
+    }
+
+    pub const fn is_solid(&self) -> bool {
+        match self {
+            BlockType::Air => false,
+            BlockType::Stone => true,
+            BlockType::Coal => true,
+            BlockType::Voxel(_) => false,
+            BlockType::MultiVoxel(_) => false,
+        }
+    }
+}

@@ -1,11 +1,11 @@
-use crate::screen::{hex_map::cells::HexId, voxel_world::player_controller::VoxelCamera, HexSelect, MapDirection, Screen};
+use crate::screen::{hex_map::cells::HexId, voxel_world::player_controller::VoxelCamera, Screen};
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier3d::prelude::*;
 use rand::{Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
-use super::{inventory::Inventory, BlockType};
+use super::BlockType;
 
 pub struct VoxelPlugin;
 
@@ -18,56 +18,6 @@ impl Plugin for VoxelPlugin {
 /// This describes the main player in the voxel world
 #[derive(Component)]
 pub struct VoxelPlayer;
-
-pub fn spawn_voxel_map(mut commands: Commands, blocks: Res<Blocks>, hex_select: Res<HexSelect>) {
-    commands
-        .spawn((
-            StateScoped(Screen::VoxelWorld),
-            SpatialBundle {
-                transform: Transform::from_translation(pos_from_enter(&hex_select.direction)),
-                ..Default::default()
-            },
-            RigidBody::Dynamic,
-            LockedAxes::ROTATION_LOCKED,
-            Collider::capsule_y(0.5, 0.45),
-            KinematicCharacterControllerOutput::default(),
-            bevy_rapier3d::control::KinematicCharacterController {
-                ..Default::default()
-            },
-        ))
-        .with_children(|p| {
-            p.spawn((
-                VoxelPlayer,
-                Inventory::new(10),
-                Camera3dBundle {
-                    camera: Camera {
-                        order: 1,
-                        ..Default::default()
-                    },
-                    transform: Transform::from_translation(Vec3::Y * 0.5),
-                    ..Default::default()
-                },
-            ));
-        });
-    return;
-    fill_world(
-        commands,
-        hex_select.hex_id,
-        WorldType::from_u8(3), // ! FIX THIS AS WORLD TYPE SELECTION. CURRENTLY FORCES STONE. USE SEED AND SAVE DATA
-        blocks.as_ref(),
-    );
-}
-
-fn pos_from_enter(direction: &MapDirection) -> Vec3 {
-    match direction {
-        MapDirection::Down => Vec3::new(8., 0., 8.),
-        MapDirection::North => Vec3::new(16., 8., 8.),
-        MapDirection::East => Vec3::new(8., 8., 16.),
-        MapDirection::Up => Vec3::new(8., 16., 8.),
-        MapDirection::South => Vec3::new(0., 8., 8.),
-        MapDirection::West => Vec3::new(8., 8., 0.),
-    }
-}
 
 #[derive(PartialEq, Eq, Serialize, Deserialize, Default, Debug, Clone, Copy)]
 pub enum WorldType {
@@ -113,7 +63,7 @@ impl WorldType {
         }
     }
 
-    pub fn sample(&self, mut rng: &mut impl Rng, pos: IVec3) -> BlockType {
+    pub fn sample(&self, rng: &mut impl Rng, pos: IVec3) -> BlockType {
         match self {
             WorldType::Empty => BlockType::Air,
             WorldType::Stone => {
