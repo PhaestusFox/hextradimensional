@@ -57,7 +57,7 @@ impl Plugin for AppPlugin {
                         volume: Volume::new(0.3),
                     },
                     ..default()
-                }),
+                }).set(ImagePlugin::default_nearest()),
         );
 
         // Add other plugins.
