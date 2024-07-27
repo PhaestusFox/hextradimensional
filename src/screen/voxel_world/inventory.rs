@@ -15,6 +15,7 @@ pub struct InventorySlot {
 #[derive(Component, Reflect)]
 pub struct Inventory {
     pub slots: Vec<InventorySlot>,
+    pub selected_slot: usize,
 }
 
 impl Inventory {
@@ -27,6 +28,7 @@ impl Inventory {
                 };
                 size
             ],
+            selected_slot: 0,
         }
     }
 
@@ -88,5 +90,15 @@ impl Inventory {
         }
 
         true
+    }
+
+    pub fn select_slot(&mut self, slot_index: usize) {
+        if slot_index < self.slots.len() {
+            self.selected_slot = slot_index;
+        }
+    }
+
+    pub fn get_selected_block(&self) -> Option<BlockType> {
+        self.slots[self.selected_slot].resource_type.clone()
     }
 }

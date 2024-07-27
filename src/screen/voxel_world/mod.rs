@@ -11,7 +11,10 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use inventory::Inventory;
 use player_controller::spawn_player;
 use std::sync::Arc;
-use ui::{cleanup_inventory_ui, setup_inventory_ui, toggle_full_inventory, update_inventory_ui};
+use ui::{
+    cleanup_inventory_ui, handle_slot_selection, setup_inventory_ui, toggle_full_inventory,
+    update_inventory_ui,
+};
 use voxel_util::Blocks;
 
 pub(super) fn plugin(app: &mut App) {
@@ -25,7 +28,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         Update,
-        update_inventory_ui.run_if(in_state(Screen::VoxelWorld)),
+        (update_inventory_ui, handle_slot_selection).run_if(in_state(Screen::VoxelWorld)),
     );
     app.add_systems(
         OnExit(Screen::VoxelWorld),

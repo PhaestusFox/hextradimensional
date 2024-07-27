@@ -58,3 +58,31 @@ pub fn update_inventory_ui(
         }
     }
 }
+
+pub fn handle_slot_selection(
+    mut inventory_query: Query<&mut Inventory, With<VoxelPlayer>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+) {
+    if let Ok(mut inventory) = inventory_query.get_single_mut() {
+        for (i, key) in [
+            KeyCode::Digit1,
+            KeyCode::Digit2,
+            KeyCode::Digit3,
+            KeyCode::Digit4,
+            KeyCode::Digit5,
+            KeyCode::Digit6,
+            KeyCode::Digit7,
+            KeyCode::Digit8,
+            KeyCode::Digit9,
+            KeyCode::Digit0,
+        ]
+        .iter()
+        .enumerate()
+        {
+            if keyboard_input.just_pressed(*key) {
+                inventory.select_slot(i);
+                break;
+            }
+        }
+    }
+}

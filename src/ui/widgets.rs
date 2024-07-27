@@ -241,8 +241,29 @@ impl<T: Spawn> Widgets for T {
         ));
 
         entity.with_children(|children| {
-            for slot in inventory.slots.iter().take(10) {
-                children.inventory_slot(slot, server);
+            for (index, slot) in inventory.slots.iter().take(10).enumerate() {
+                let mut slot_entity = children.spawn((
+                    Name::new(format!("Hotbar Slot {}", index)),
+                    NodeBundle {
+                        style: Style {
+                            width: Percent(100.0),
+                            height: Percent(100.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        background_color: if index == inventory.selected_slot {
+                            BackgroundColor(Color::srgb(1.0, 0.0, 0.0))
+                        } else {
+                            BackgroundColor(Color::NONE)
+                        },
+                        ..default()
+                    },
+                ));
+
+                slot_entity.with_children(|slot_children| {
+                    slot_children.inventory_slot(slot, server);
+                });
             }
         });
 

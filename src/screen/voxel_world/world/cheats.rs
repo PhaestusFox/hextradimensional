@@ -15,7 +15,7 @@ pub fn give_player_block(
         };
         for mut inventory in &mut player {
             warn!("cheated {:?} in", give);
-            inventory.add_resource(give.clone(), 1);
+            inventory.add_resource(give.clone(), 200);
         }
     }
 }
