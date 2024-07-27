@@ -8,8 +8,9 @@ pub mod voxel_util;
 use super::{MapDirection, Screen};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use inventory::Inventory;
 use std::sync::Arc;
-use ui::{cleanup_inventory_ui, setup_inventory_ui};
+use ui::{cleanup_inventory_ui, setup_inventory_ui, update_inventory_ui};
 use voxel_util::{spawn_voxel_map, Blocks};
 
 pub(super) fn plugin(app: &mut App) {
@@ -21,6 +22,7 @@ pub(super) fn plugin(app: &mut App) {
             setup_inventory_ui.after(spawn_voxel_map),
         ),
     );
+    app.add_systems(Update, update_inventory_ui.run_if(in_state(Screen::VoxelWorld)));
     app.add_systems(
         OnExit(Screen::VoxelWorld),
         (exit_playing, cleanup_inventory_ui),
@@ -34,6 +36,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.init_resource::<Blocks>();
     app.add_plugins(player_controller::VoxelCamera);
+    app.register_type::<Inventory>();
     world::voxel_world(app);
 }
 
@@ -70,11 +73,14 @@ pub struct DirectedVoxel {
 }
 
 /// All block types
-#[derive(Debug, Hash, PartialEq, Eq, strum_macros::EnumIter, Clone, Reflect)]
+#[derive(Debug, Hash, PartialEq, Eq, strum_macros::EnumIter, Clone, Reflect, Component)]
 pub enum BlockType {
     Air,
     Stone,
     Coal,
+    IronOre,
+    IronBlock,
+    Furnace,
     Voxel(VoxelData),
     MultiVoxel(Vec<DirectedVoxel>),
 }

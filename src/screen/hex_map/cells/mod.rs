@@ -193,6 +193,7 @@ pub enum HexagonType {
     Empty,
     Stone,
     Coal,
+    Iron,
 }
 
 impl Into<WorldType> for HexagonType {
@@ -201,6 +202,7 @@ impl Into<WorldType> for HexagonType {
             HexagonType::Empty => WorldType::Empty,
             HexagonType::Stone => WorldType::Stone,
             HexagonType::Coal => WorldType::Coal,
+            HexagonType::Iron => WorldType::Iron,
         }
     }
 }

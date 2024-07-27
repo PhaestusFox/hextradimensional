@@ -1,10 +1,10 @@
-use bevy::prelude::Component;
+use bevy::{prelude::Component, reflect::Reflect};
 
 use super::BlockType;
 
 /// Define a struct for inventory slots
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub struct InventorySlot {
     pub resource_type: Option<BlockType>,
     pub quantity: u32,
@@ -12,7 +12,7 @@ pub struct InventorySlot {
 
 /// This is the inventory component, meant to be used in conjunction with VoxelPlayer
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future
-#[derive(Component)]
+#[derive(Component, Reflect)]
 pub struct Inventory {
     pub slots: Vec<InventorySlot>,
 }

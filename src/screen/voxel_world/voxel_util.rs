@@ -75,7 +75,7 @@ pub enum WorldType {
     Empty,
     Stone,
     Coal,
-    Flat,
+    Iron,
 }
 
 #[derive(Resource)]
@@ -108,24 +108,13 @@ impl WorldType {
             0 => WorldType::Empty,
             1 => WorldType::Stone,
             2 => WorldType::Coal,
-            3 => WorldType::Flat,
+            3 => WorldType::Iron,
             _ => unreachable!(),
         }
     }
 
     pub fn sample(&self, mut rng: &mut impl Rng, pos: IVec3) -> BlockType {
         match self {
-            WorldType::Flat => {
-                if pos.y == 0 {
-                    BlockType::Stone
-                } else if pos.y == 1 && rand::thread_rng().gen_bool(0.1) {
-                    BlockType::Coal
-                } else if pos.y == 2 && rand::thread_rng().gen_bool(0.1) {
-                    BlockType::Coal
-                } else {
-                    BlockType::Air
-                }
-            }
             WorldType::Empty => BlockType::Air,
             WorldType::Stone => {
                 if rng.gen_bool(0.6) || pos.y == 0 {
@@ -133,12 +122,21 @@ impl WorldType {
                 } else {
                     BlockType::Air
                 }
-            }
+            },
             WorldType::Coal => {
                 if rng.gen_bool(0.3) && pos.y != 0 {
                     BlockType::Air
                 } else if rng.gen_bool(0.25) {
                     BlockType::Coal
+                } else {
+                    BlockType::Stone
+                }
+            },
+            WorldType::Iron => {
+                if rng.gen_bool(0.3) && pos.y != 0 {
+                    BlockType::Air
+                } else if rng.gen_bool(0.25) {
+                    BlockType::IronOre
                 } else {
                     BlockType::Stone
                 }
@@ -155,12 +153,12 @@ fn fill_world(mut commands: Commands, id: HexId, world_type: WorldType, blocks: 
     for x in 0..16 {
         for y in 0..16 {
             for z in 0..16 {
-                let block = world_type.sample(&mut rng, IVec3::new(x, y, z));
+                let block = &world_type.sample(&mut rng, IVec3::new(x, y, z));
                 let solidity = block.is_solid();
                 let mut entity = commands.spawn((
                     StateScoped(Screen::VoxelWorld),
                     PbrBundle {
-                        mesh: blocks.mesh(),
+                        mesh: blocks.mesh(block),
                         material: blocks.texture(block),
                         transform: Transform::from_translation(Vec3::new(
                             x as f32, y as f32, z as f32,
@@ -184,6 +182,22 @@ impl BlockType {
             BlockType::Coal => "images/voxels/coal.png",
             BlockType::Voxel(_) => "",
             BlockType::MultiVoxel(_) => "",
+            BlockType::IronOre => "images/voxels/ore_iron.png",
+            BlockType::IronBlock => "images/voxels/refined_iron.png",
+            BlockType::Furnace => "images/multi_blocks/furnace.png",
+        }
+    }
+
+    const fn mesh_path(&self) -> Option<&'static str> {
+        match self {
+            BlockType::Air => None,
+            BlockType::Stone => None,
+            BlockType::Coal => None,
+            BlockType::Voxel(_) => None,
+            BlockType::MultiVoxel(_) => None,
+            BlockType::IronOre => None,
+            BlockType::IronBlock => None,
+            BlockType::Furnace => Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0")
         }
     }
 
@@ -194,46 +208,56 @@ impl BlockType {
             BlockType::Coal => true,
             BlockType::Voxel(_) => false,
             BlockType::MultiVoxel(_) => false,
+            BlockType::IronBlock => true,
+            BlockType::IronOre => true,
+            BlockType::Furnace => true,
         }
     }
 }
 
 #[derive(Resource)]
 pub struct Blocks {
-    mesh: Handle<Mesh>,
+    meshs: HashMap<BlockType, Handle<Mesh>>,
     textures: HashMap<BlockType, Handle<StandardMaterial>>,
 }
 
 impl Blocks {
-    pub fn texture(&self, block: BlockType) -> Handle<StandardMaterial> {
-        self.textures.get(&block).cloned().unwrap_or_default()
+    pub fn texture(&self, block: &BlockType) -> Handle<StandardMaterial> {
+        self.textures.get(block).cloned().unwrap_or_default()
     }
-    pub fn mesh(&self) -> Handle<Mesh> {
-        self.mesh.clone()
+    pub fn mesh(&self, block: &BlockType) -> Handle<Mesh> {
+        self.meshs.get(block).cloned().unwrap_or_default()
     }
 }
 
 impl FromWorld for Blocks {
     fn from_world(world: &mut World) -> Self {
         let mut blocks = Blocks {
-            mesh: world
-                .resource_mut::<Assets<Mesh>>()
-                .add(Cuboid::new(1., 1., 1.)),
+            meshs: HashMap::default(),
             textures: HashMap::default(),
         };
         let asset_server = world.resource::<AssetServer>().clone();
-        let mut materials = world.resource_mut::<Assets<StandardMaterial>>();
-        for block in BlockType::iter() {
-            let texture_path = block.texture_path();
-            blocks.textures.insert(
-                block,
-                materials.add(StandardMaterial {
-                    base_color_texture: Some(asset_server.load(texture_path)),
-                    ..Default::default()
-                }),
-            );
-        }
-
+        let mut materials = world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
+            let mut meshes = world.resource_mut::<Assets<Mesh>>();
+            let default = meshes.add(Cuboid::from_length(1.));
+            for block in BlockType::iter() {
+                let texture_path = block.texture_path();
+                let mesh_path = block.mesh_path();
+                blocks.textures.insert(
+                    block.clone(),
+                    materials.add(StandardMaterial {
+                        base_color_texture: Some(asset_server.load(texture_path)),
+                        ..Default::default()
+                    }),
+                );
+                if let Some(mesh) = mesh_path {
+                    blocks.meshs.insert(block, asset_server.load(mesh));
+                } else {
+                    blocks.meshs.insert(block, default.clone());
+                }
+            }
+        });
+            
         blocks
     }
 }

@@ -52,7 +52,8 @@ fn player_move(
         right = right.normalize();
         let next = (forward * delta.z + right * delta.x) * time.delta_seconds() * 10.;
         if let Ok(mut controller) = player.get_mut(body.get()) {
-            controller.translation = Some(next);
+            // need to add small amount of down movement or the player is never grounded standing still
+            controller.translation = Some(next + Vec3::NEG_Y * 0.01);
         } else {
             warn!("Voxel Player should be child of player controller");
         }
@@ -185,7 +186,6 @@ fn apply_jump(
     let max_jump = JUMP_POWER * time.delta_seconds();
     for (player, mut jump, mut controller) in &mut jumping {
         let jump_power = max_jump.min(jump.left);
-        info!("jump to use {}", jump_power);
         let to_move = if let Some(other) = controller.translation {
             other + Vec3::Y * jump_power
         } else {
@@ -203,7 +203,7 @@ fn player_jump(
     input: Res<ButtonInput<KeyCode>>,
     settings: Res<VoxelSettings>,
     mut commands: Commands,
-    players: Query<(Entity, &KinematicCharacterControllerOutput), With<VoxelPlayer>>,
+    players: Query<(Entity, &KinematicCharacterControllerOutput)>,
 ) {
     if input.just_pressed(settings.jump) {
         for (entity, output) in &players {
