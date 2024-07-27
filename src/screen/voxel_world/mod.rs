@@ -5,7 +5,7 @@ pub mod ui;
 pub mod voxel_util;
 pub mod world;
 
-use super::{MapDirection, Screen};
+use super::{hex_vox_util::MapDirection, Screen};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use inventory::Inventory;

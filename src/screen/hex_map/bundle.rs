@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{cells::HexId, hex_util::HEX_SIZE};
+use crate::screen::hex_vox_util::{HexId, HEX_SIZE};
 
 #[derive(Bundle)]
 pub struct HexCellBundle {

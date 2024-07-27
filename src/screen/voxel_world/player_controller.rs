@@ -1,4 +1,8 @@
-use crate::screen::{voxel_world::voxel_util::VoxelPlayer, HexSelect, MapDirection, Screen};
+use crate::{
+    game::HexSelect,
+    screen::{hex_vox_util::MapDirection, voxel_world::voxel_util::VoxelPlayer, Screen},
+};
+
 use bevy::{
     ecs::event::ManualEventReader,
     input::mouse::MouseMotion,

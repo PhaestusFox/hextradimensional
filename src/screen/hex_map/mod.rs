@@ -1,18 +1,22 @@
 //! The screen state for the main hex map game loop.
+mod animation;
 mod bundle;
 pub(crate) mod cells;
 mod cursor;
 mod hex_util;
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use cells::CellIcons;
-use hex_util::{go_to_voxel, spawn_test_grid};
+pub mod movement;
+pub mod spawn;
+
+use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 
 use super::Screen;
-use crate::game::{
-    assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack, spawn::player::SpawnPlayer,
-};
+use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use cells::CellIcons;
+use hex_util::{go_to_voxel, spawn_hex_grid};
+use spawn::player::SpawnPlayer;
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins((animation::plugin, movement::plugin, spawn::plugin));
     app.add_systems(OnEnter(Screen::HexMap), enter_playing);
     app.add_systems(OnExit(Screen::HexMap), exit_playing);
     app.add_systems(PreUpdate, cells::update_transforms);
@@ -27,8 +31,7 @@ pub(super) fn plugin(app: &mut App) {
         .init_resource::<CellIcons>();
 
     #[cfg(debug_assertions)]
-    // todo Remove from game
-    app.add_systems(OnEnter(Screen::HexMap), spawn_test_grid)
+    app.add_systems(OnEnter(Screen::HexMap), spawn_hex_grid)
         .add_systems(Update, go_to_voxel.run_if(in_state(Screen::HexMap)));
 }
 

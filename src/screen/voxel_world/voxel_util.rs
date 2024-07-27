@@ -1,4 +1,4 @@
-use crate::screen::{hex_map::cells::HexId, voxel_world::player_controller::VoxelCamera, Screen};
+use crate::screen::{hex_vox_util::HexId, voxel_world::player_controller::VoxelCamera, Screen};
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier3d::prelude::*;
 use rand::{Rng, SeedableRng};
@@ -66,9 +66,7 @@ impl WorldType {
     pub fn sample(&self, rng: &mut impl Rng, pos: IVec3) -> BlockType {
         match self {
             WorldType::Empty => BlockType::Air,
-            WorldType::Stone => {
-                BlockType::Stone
-            }
+            WorldType::Stone => BlockType::Stone,
             WorldType::Coal => {
                 if rng.gen_bool(0.25) {
                     BlockType::Coal
@@ -81,35 +79,6 @@ impl WorldType {
                     BlockType::IronOre
                 } else {
                     BlockType::Stone
-                }
-            }
-        }
-    }
-}
-
-fn fill_world(mut commands: Commands, id: HexId, world_type: WorldType, blocks: &Blocks) {
-    if world_type == WorldType::Empty {
-        return;
-    }
-    let mut rng = rand::rngs::StdRng::seed_from_u64((id.q() as u64) << 32 | id.r() as u64);
-    for x in 0..16 {
-        for y in 0..16 {
-            for z in 0..16 {
-                let block = &world_type.sample(&mut rng, IVec3::new(x, y, z));
-                let solidity = block.is_solid();
-                let mut entity = commands.spawn((
-                    StateScoped(Screen::VoxelWorld),
-                    PbrBundle {
-                        mesh: blocks.mesh(block),
-                        material: blocks.texture(block),
-                        transform: Transform::from_translation(Vec3::new(
-                            x as f32, y as f32, z as f32,
-                        )),
-                        ..Default::default()
-                    },
-                ));
-                if solidity {
-                    entity.insert(Collider::cuboid(0.5, 0.5, 0.5));
                 }
             }
         }

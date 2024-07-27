@@ -16,13 +16,16 @@ fn play_sfx(
         PlaySfx::Key(key) => *key,
         PlaySfx::RandomStep => random_step(),
     };
-    commands.spawn(AudioSourceBundle {
-        source: sfx_handles[&sfx_key].clone_weak(),
-        settings: PlaybackSettings {
-            mode: PlaybackMode::Despawn,
-            ..default()
+    commands.spawn((
+        Name::new("SFX Source"),
+        AudioSourceBundle {
+            source: sfx_handles[&sfx_key].clone_weak(),
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                ..default()
+            },
         },
-    });
+    ));
 }
 
 /// Trigger this event to play a single sound effect.

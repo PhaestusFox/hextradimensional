@@ -1,6 +1,6 @@
-use crate::screen::hex_map::cells::HexId as CellId;
+use crate::screen::{hex_map::cells::HexId as CellId, hex_vox_util::MapDirection};
 
-use super::{super::MapDirection, Ranged};
+use super::Ranged;
 
 pub struct RingIter {
     cell: CellId,

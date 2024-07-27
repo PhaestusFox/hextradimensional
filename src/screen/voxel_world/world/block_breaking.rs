@@ -1,6 +1,13 @@
+use crate::{
+    game::HexSelect,
+    screen::voxel_world::{
+        inventory::Inventory,
+        voxel_util::{Blocks, VoxelPlayer},
+        BlockType,
+    },
+};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::screen::{voxel_world::{inventory::Inventory, voxel_util::{Blocks, VoxelPlayer}, BlockType}, HexSelect};
 
 use super::{VoxelChunk, VoxelId};
 
@@ -20,8 +27,17 @@ pub(crate) fn block_breaking_plugin(app: &mut App) {
         app.init_resource::<BlockBreakDebugSettings>();
         app.register_type::<BlockBreakDebugSettings>();
         app.add_systems(Update, draw_debug)
-        .add_systems(Update, block_placing)
-        .add_systems(Update, (break_block, scail_breaking_block, unbreak_block, pickup_block).chain());
+            .add_systems(Update, block_placing)
+            .add_systems(
+                Update,
+                (
+                    break_block,
+                    scail_breaking_block,
+                    unbreak_block,
+                    pickup_block,
+                )
+                    .chain(),
+            );
     }
 }
 
@@ -33,7 +49,11 @@ fn draw_debug(
     if settings.show_player_ray {
         for player in &player {
             let forward = player.forward() * 3.;
-            gizmo.ray(player.translation(), player.translation() + forward, LinearRgba::GREEN);
+            gizmo.ray(
+                player.translation(),
+                player.translation() + forward,
+                LinearRgba::GREEN,
+            );
         }
     }
 }
@@ -58,19 +78,27 @@ fn break_block(
     player: Query<&GlobalTransform, With<VoxelPlayer>>,
     mut voxels: Query<Option<&mut Breaking>, With<VoxelId>>,
 ) {
-    if !input.just_pressed(MouseButton::Left) {return;}
+    if !input.just_pressed(MouseButton::Left) {
+        return;
+    }
     for player in &player {
-        if let Some((hit, _)) = physics.cast_ray(player.translation(), player.forward().as_vec3(), 6., false, QueryFilter::only_fixed()) {
+        if let Some((hit, _)) = physics.cast_ray(
+            player.translation(),
+            player.forward().as_vec3(),
+            6.,
+            false,
+            QueryFilter::only_fixed(),
+        ) {
             match voxels.get_mut(hit) {
                 Ok(None) => {
                     commands.entity(hit).insert(Breaking(0.5));
-                },
+                }
                 Ok(Some(mut breaking)) => {
                     breaking.0 += 0.5;
-                },
+                }
                 Err(_) => {
                     error!("rays should only hit voxels");
-                },
+                }
             }
         }
     }
@@ -86,9 +114,14 @@ fn pickup_block(
     for mut inventory in &mut player {
         for (entity, state, id) in &blocks {
             if state.0 >= 0.55 {
-                let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {continue;};
+                let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
+                    continue;
+                };
                 let out = chunk.set(id.0, BlockType::Air);
-                if out == BlockType::Air {warn!("Removed Air"); continue;};
+                if out == BlockType::Air {
+                    warn!("Removed Air");
+                    continue;
+                };
                 inventory.add_resource(out, 1);
                 commands.entity(entity).despawn_recursive();
             }
@@ -102,12 +135,17 @@ fn scail_breaking_block(
     mut removed: RemovedComponents<Breaking>,
 ) {
     for (block, breaking) in &mut changed {
-        let Ok(mut transform) = blocks.get_mut(block) else {warn!("Breaking block has no transform");continue;};
+        let Ok(mut transform) = blocks.get_mut(block) else {
+            warn!("Breaking block has no transform");
+            continue;
+        };
         // max is so 0 scale is not possible;
         transform.scale = Vec3::splat(1. - breaking.0).max(Vec3::splat(0.01));
     }
     for block in removed.read() {
-        let Ok(mut transform) = blocks.get_mut(block) else {continue;};
+        let Ok(mut transform) = blocks.get_mut(block) else {
+            continue;
+        };
         transform.scale = Vec3::ONE;
     }
 }
@@ -122,17 +160,37 @@ fn block_placing(
     selected: Res<HexSelect>,
     mut chunk_data: ResMut<Assets<VoxelChunk>>,
 ) {
-    if !input.just_pressed(MouseButton::Right) {return;}
+    if !input.just_pressed(MouseButton::Right) {
+        return;
+    }
     for (transform, mut inventory) in &mut player {
-        let Some((hit, normal)) = physics.cast_ray_and_get_normal(transform.translation(), transform.forward().as_vec3(), 6., false, QueryFilter::only_fixed()) else {continue;};
+        let Some((hit, normal)) = physics.cast_ray_and_get_normal(
+            transform.translation(),
+            transform.forward().as_vec3(),
+            6.,
+            false,
+            QueryFilter::only_fixed(),
+        ) else {
+            continue;
+        };
         let id = vec3_to_voxelId(normal.normal);
-        let Ok(old) = blocks.get(hit) else {error!("hit block is not voxel"); continue;};
+        let Ok(old) = blocks.get(hit) else {
+            error!("hit block is not voxel");
+            continue;
+        };
         let id = id + *old;
-        if !id.in_chunk() {continue;}
-        let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {continue;};
-        let Some(block) = inventory.get_selected_block() else {continue;};
+        if !id.in_chunk() {
+            continue;
+        }
+        let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
+            continue;
+        };
+        let Some(block) = inventory.get_selected_block() else {
+            continue;
+        };
         let solidity = block.is_solid();
         let mut entity = commands.spawn((
+            Name::new("Voxel Block Placed"),
             id,
             PbrBundle {
                 mesh: voxel_blocks.mesh(&block),
@@ -151,7 +209,7 @@ fn block_placing(
 
 fn vec3_to_voxelId(vec: Vec3) -> VoxelId {
     let abs = vec.abs();
-    
+
     // x is biggest
     if abs.x > abs.y && abs.x > abs.z {
         if vec.x > 0. {

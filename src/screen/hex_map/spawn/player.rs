@@ -4,16 +4,21 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        animation::PlayerAnimation,
         assets::{HandleMap, ImageKey},
-        movement::{Movement, MovementController, WrapWithinWindow},
+        HexSelect,
     },
-    screen::Screen,
+    screen::{
+        hex_map::{
+            animation::PlayerAnimation,
+            movement::{Movement, MovementController, WrapWithinWindow},
+        },
+        Screen,
+    },
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_player);
-    app.register_type::<Player>();
+    app.register_type::<HexPlayer>();
 }
 
 #[derive(Event, Debug)]
@@ -21,13 +26,14 @@ pub struct SpawnPlayer;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
-pub struct Player;
+pub struct HexPlayer;
 
 pub fn spawn_player(
     _trigger: Trigger<SpawnPlayer>,
     mut commands: Commands,
     image_handles: Res<HandleMap<ImageKey>>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    hex_select: Res<HexSelect>,
 ) {
     // A texture atlas is a way to split one image with a grid into multiple sprites.
     // By attaching it to a [`SpriteBundle`] and providing an index, we can specify which section of the image we want to see.
@@ -39,11 +45,15 @@ pub fn spawn_player(
 
     commands.spawn((
         Name::new("Player"),
-        Player,
+        HexPlayer,
         SpriteBundle {
             texture: image_handles[&ImageKey::Ducky].clone_weak(),
-            transform: Transform::from_scale(Vec2::splat(2.0).extend(1.0)),
-            ..Default::default()
+            transform: Transform {
+                translation: (hex_select.hex_id).xyz(),
+                scale: Vec2::splat(2.0).extend(1.0),
+                rotation: Quat::IDENTITY,
+            },
+            ..default()
         },
         TextureAtlas {
             layout: texture_atlas_layout.clone(),

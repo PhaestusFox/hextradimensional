@@ -1,6 +1,9 @@
 use std::io::{Error, ErrorKind};
 
-use crate::screen::{hex_map::cells::HexId, HexSelect, Screen};
+use crate::{
+    game::HexSelect,
+    screen::{hex_vox_util::HexId, Screen},
+};
 use bevy::{
     asset::{
         io::{AssetReader, AssetReaderError, ErasedAssetReader, Reader},
@@ -22,9 +25,12 @@ pub struct VoxelId(pub IVec3);
 
 impl VoxelId {
     pub fn in_chunk(&self) -> bool {
-       !(self.x() < 0 || self.x() >= CHUNK_SIZE as i32 ||
-        self.y() < 0 || self.y() >= CHUNK_SIZE as i32 ||
-        self.z() < 0 || self.z() >= CHUNK_SIZE as i32)
+        !(self.x() < 0
+            || self.x() >= CHUNK_SIZE as i32
+            || self.y() < 0
+            || self.y() >= CHUNK_SIZE as i32
+            || self.z() < 0
+            || self.z() >= CHUNK_SIZE as i32)
     }
 
     pub fn x(&self) -> i32 {
@@ -41,13 +47,17 @@ impl VoxelId {
 impl std::ops::Add for VoxelId {
     type Output = VoxelId;
     fn add(self, rhs: Self) -> Self::Output {
-        VoxelId(IVec3::new(self.0.x + rhs.0.x, self.0.y + rhs.0.y, self.0.z + rhs.0.z))
+        VoxelId(IVec3::new(
+            self.0.x + rhs.0.x,
+            self.0.y + rhs.0.y,
+            self.0.z + rhs.0.z,
+        ))
     }
 }
 
 pub mod block_breaking;
-pub mod multi_block;
 pub mod cheats;
+pub mod multi_block;
 
 pub const CHUNK_SIZE: usize = 16;
 
@@ -93,8 +103,11 @@ impl VoxelChunk {
     }
 
     pub fn get(&self, pos: IVec3) -> BlockType {
-        let index = pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
-        if index >= CHUNK_SIZE.pow(3) {return BlockType::Air;}
+        let index =
+            pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
+        if index >= CHUNK_SIZE.pow(3) {
+            return BlockType::Air;
+        }
         self.0[index].clone()
     }
 }
@@ -102,11 +115,17 @@ impl VoxelChunk {
 pub(crate) fn voxel_world(app: &mut App) {
     block_breaking_plugin(app);
     app.init_asset::<VoxelChunk>()
-    .init_resource::<multi_block::MultiBlocks>();
+        .init_resource::<multi_block::MultiBlocks>();
     app.init_asset_loader::<VoxelChunkLoader>();
     app.add_systems(FixedUpdate, multi_block::check_for_multi_blocks);
-    app.add_systems(Update, fill_world_after_load.run_if(in_state(Screen::VoxelWorld)));
-    app.add_systems(OnEnter(Screen::VoxelWorld), (load_chunk, open_loaded_world).run_if(resource_changed::<HexSelect>));
+    app.add_systems(
+        Update,
+        fill_world_after_load.run_if(in_state(Screen::VoxelWorld)),
+    );
+    app.add_systems(
+        OnEnter(Screen::VoxelWorld),
+        (load_chunk, open_loaded_world).run_if(resource_changed::<HexSelect>),
+    );
     #[cfg(feature = "dev")]
     app.add_systems(Update, cheats::give_player_block);
 }
@@ -128,40 +147,39 @@ fn open_loaded_world(
     }
 }
 
-fn fill_world(
-    chunk: &VoxelChunk,
-    commands: &mut Commands,
-    blocks: &Blocks
-) {
-    commands.spawn((
-        SpatialBundle::default(),
-        Name::new("Chunk"),
-        StateScoped(crate::screen::Screen::VoxelWorld),
-    )).with_children(|commands| {
-        for x in 0..CHUNK_SIZE {
-            for y in 0..CHUNK_SIZE {
-                for z in 0..CHUNK_SIZE {
-                    let id = IVec3::new(x as i32, y as i32, z as i32);
-                    let block = &chunk.get(id);
-                    let solidity = block.is_solid();
-                    let mut entity = commands.spawn((
-                        VoxelId(id),
-                        PbrBundle {
-                            mesh: blocks.mesh(block),
-                            material: blocks.texture(block),
-                            transform: Transform::from_translation(Vec3::new(
-                                x as f32, y as f32, z as f32,
-                            )),
-                            ..Default::default()
-                        },
-                    ));
-                    if solidity {
-                        entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+fn fill_world(chunk: &VoxelChunk, commands: &mut Commands, blocks: &Blocks) {
+    commands
+        .spawn((
+            SpatialBundle::default(),
+            Name::new("Chunk"),
+            StateScoped(crate::screen::Screen::VoxelWorld),
+        ))
+        .with_children(|commands| {
+            for x in 0..CHUNK_SIZE {
+                for y in 0..CHUNK_SIZE {
+                    for z in 0..CHUNK_SIZE {
+                        let id = IVec3::new(x as i32, y as i32, z as i32);
+                        let block = &chunk.get(id);
+                        let solidity = block.is_solid();
+                        let mut entity = commands.spawn((
+                            Name::new("Voxel Block"),
+                            VoxelId(id),
+                            PbrBundle {
+                                mesh: blocks.mesh(block),
+                                material: blocks.texture(block),
+                                transform: Transform::from_translation(Vec3::new(
+                                    x as f32, y as f32, z as f32,
+                                )),
+                                ..Default::default()
+                            },
+                        ));
+                        if solidity {
+                            entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+                        }
                     }
                 }
             }
-        }
-    });
+        });
 }
 
 fn fill_world_after_load(
@@ -175,7 +193,7 @@ fn fill_world_after_load(
             AssetEvent::Added { id } => {
                 let chunk = chunks.get(id.clone()).expect("just loaded");
                 fill_world(chunk, &mut commands, &blocks);
-            },
+            }
             AssetEvent::Modified { id } => {
                 println!("Update changed to world");
             }

@@ -12,36 +12,65 @@ const SEED: [u8; 32] = [
 use rand::{seq::IteratorRandom, Rng, SeedableRng};
 use strum::IntoEnumIterator;
 // ! Fix test module
-use crate::screen::{
-    hex_map::{
-        bundle::HexCellBundle,
-        cells::{self, CellIcons, HexId, HexagonType},
-        cursor,
+use crate::{
+    game::{main_character::Seed, HexSelect},
+    screen::{
+        hex_map::{
+            bundle::HexCellBundle,
+            cells::{self, CellIcons, HexagonType},
+            cursor,
+        },
+        hex_vox_util::{HexId, MapDirection, HEX_SIZE},
+        Screen,
     },
-    HexSelect, MapDirection, Screen,
 };
 
-pub fn spawn_test_grid(mut commands: Commands, icons: Res<CellIcons>) {
-    let mut rng = rand::rngs::StdRng::from_seed(SEED);
-    for hex_id in cells::SpiralIter::new(10) {
-        let hex_type = if rng.gen_bool(0.1) {
-            HexagonType::iter()
-                .choose(&mut rng)
-                .expect("Iter not Empty")
-        } else {
-            crate::screen::hex_map::cells::HexagonType::Empty
-        };
-        commands.spawn((
-            StateScoped(Screen::HexMap),
-            hex_type,
-            HexCellBundle {
-                id: hex_id,
-                transform: Transform::from_translation(Vec3::NEG_Z * 10.),
-                texture: icons.get(hex_type),
-                ..Default::default()
-            },
-        ));
-    }
+#[derive(Component, Reflect)]
+pub struct HexCellContainer;
+
+pub fn spawn_hex_grid(
+    mut commands: Commands,
+    icons: Res<CellIcons>,
+    container: Query<Entity, With<HexCellContainer>>,
+    seed: Res<Seed>,
+) {
+    let mut rng = rand::rngs::StdRng::seed_from_u64(seed.0);
+    let container_entity = if container.is_empty() {
+        commands
+            .spawn((Name::new("Hex Cell Container"), HexCellContainer))
+            .id()
+    } else {
+        container.single()
+    };
+
+    commands.entity(container_entity).with_children(|parent| {
+        for hex_coord in cells::SpiralIter::new(10) {
+            let hex_type = if rng.gen_bool(0.1) {
+                HexagonType::iter()
+                    .choose(&mut rng)
+                    .expect("Iter not Empty")
+            } else {
+                crate::screen::hex_map::cells::HexagonType::Empty
+            };
+
+            // Get the base position from HexId
+            let mut position = hex_coord.xyz();
+            position.z = -10.0;
+
+            parent.spawn((
+                Name::new("Hex Cell"),
+                StateScoped(Screen::HexMap),
+                hex_type,
+                HexCellBundle {
+                    id: hex_coord,
+                    transform: Transform::from_translation(position),
+                    global_transform: GlobalTransform::from_translation(position),
+                    texture: icons.get(hex_type),
+                    ..Default::default()
+                },
+            ));
+        }
+    });
 }
 
 pub fn go_to_voxel(
@@ -72,12 +101,4 @@ pub fn go_to_voxel(
         //hex_type: hex_type as u8,
         next_screen.set(Screen::VoxelWorld);
     }
-}
-pub use constants::*;
-mod constants {
-    pub const SQR_3: f32 = 1.732050807568877;
-    pub const SQR_3_DIV_TWO: f32 = 0.8660254037844386;
-    pub const SQR_3_DIV_THREE: f32 = 0.5773502691896258;
-    pub const HEX_SIZE: f32 = 100.;
-    pub const HEX_SPACING: f32 = HEX_SIZE / 2.;
 }

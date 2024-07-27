@@ -1,11 +1,11 @@
 #[derive(Component)]
 pub struct Cursor;
 
-use super::cells::HexId;
-use super::hex_util::HEX_SIZE;
-use crate::game::spawn::player::Player;
-use crate::screen::MapDirection;
-use crate::screen::Screen;
+use super::spawn::player::HexPlayer;
+use crate::screen::{
+    hex_vox_util::{HexId, MapDirection, HEX_SIZE},
+    Screen,
+};
 use bevy::prelude::*;
 use strum::IntoEnumIterator;
 
@@ -44,10 +44,10 @@ fn clear_cursor(mut commands: Commands, cursor: Query<Entity, With<Cursor>>) {
 }
 
 fn move_cursor(
-    player: Query<&Transform, With<Player>>,
+    player: Query<&Transform, With<HexPlayer>>,
     mut cursors: Query<
         (&mut HexId, &mut Transform, &mut MapDirection),
-        (With<Cursor>, Without<Player>),
+        (With<Cursor>, Without<HexPlayer>),
     >,
 ) {
     let player = player.single();
