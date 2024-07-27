@@ -41,16 +41,20 @@ pub fn toggle_full_inventory(
 
 pub fn update_inventory_ui(
     mut commands: Commands,
-    player_query: Query<(&Inventory, &VoxelPlayer)>,
-    ui_root_query: Query<Entity, With<UiRoot>>, // Assuming you have a UiRoot component
-    server: Res<AssetServer>,
+    player_query: Query<&Inventory, With<VoxelPlayer>>,
+    ui_root_query: Query<Entity, With<UiRoot>>,
+    asset_server: Res<AssetServer>,
 ) {
-    if let Ok(_) = player_query.get_single() {
+    if let Ok(inventory) = player_query.get_single() {
         if let Ok(ui_root) = ui_root_query.get_single() {
             // Remove the old inventory UI
             commands.entity(ui_root).despawn_descendants();
+
             // Spawn the new inventory UI
-            setup_inventory_ui(commands, player_query, server);
+            commands.entity(ui_root).with_children(|parent| {
+                parent.hotbar(inventory, &asset_server);
+                parent.full_inventory(inventory, &asset_server);
+            });
         }
     }
 }
