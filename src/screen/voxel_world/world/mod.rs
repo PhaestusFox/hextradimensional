@@ -17,8 +17,33 @@ use super::{
     BlockType,
 };
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy, Debug)]
 struct VoxelId(pub IVec3);
+
+impl VoxelId {
+    pub fn in_chunk(&self) -> bool {
+       !(self.x() < 0 || self.x() >= CHUNK_SIZE as i32 ||
+        self.y() < 0 || self.y() >= CHUNK_SIZE as i32 ||
+        self.z() < 0 || self.z() >= CHUNK_SIZE as i32)
+    }
+
+    pub fn x(&self) -> i32 {
+        self.0.x
+    }
+    pub fn y(&self) -> i32 {
+        self.0.y
+    }
+    pub fn z(&self) -> i32 {
+        self.0.z
+    }
+}
+
+impl std::ops::Add for VoxelId {
+    type Output = VoxelId;
+    fn add(self, rhs: Self) -> Self::Output {
+        VoxelId(IVec3::new(self.0.x + rhs.0.x, self.0.y + rhs.0.y, self.0.z + rhs.0.z))
+    }
+}
 
 pub mod block_breaking;
 pub mod multi_block;

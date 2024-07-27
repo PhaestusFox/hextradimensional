@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::screen::{voxel_world::{inventory::Inventory, voxel_util::VoxelPlayer, BlockType}, HexSelect};
+use crate::screen::{voxel_world::{inventory::Inventory, voxel_util::{Blocks, VoxelPlayer}, BlockType}, HexSelect};
 
 use super::{VoxelChunk, VoxelId};
 
@@ -20,6 +20,7 @@ pub(crate) fn block_breaking_plugin(app: &mut App) {
         app.init_resource::<BlockBreakDebugSettings>();
         app.register_type::<BlockBreakDebugSettings>();
         app.add_systems(Update, draw_debug)
+        .add_systems(Update, block_placing)
         .add_systems(Update, (break_block, scail_breaking_block, unbreak_block, pickup_block).chain());
     }
 }
@@ -59,7 +60,7 @@ fn break_block(
 ) {
     if !input.just_pressed(MouseButton::Left) {return;}
     for player in &player {
-        if let Some((hit, _)) = physics.cast_ray(player.translation(), player.forward().as_vec3(), 3., false, QueryFilter::only_fixed()) {
+        if let Some((hit, _)) = physics.cast_ray(player.translation(), player.forward().as_vec3(), 6., false, QueryFilter::only_fixed()) {
             match voxels.get_mut(hit) {
                 Ok(None) => {
                     commands.entity(hit).insert(Breaking(0.5));
@@ -112,11 +113,69 @@ fn scail_breaking_block(
 }
 
 fn block_placing(
-    mut player: Query<&mut Inventory, With<VoxelPlayer>>,
-    input: Res<ButtonInput<MouseButton>>
+    mut commands: Commands,
+    voxel_blocks: Res<Blocks>,
+    mut player: Query<(&GlobalTransform, &mut Inventory), With<VoxelPlayer>>,
+    input: Res<ButtonInput<MouseButton>>,
+    physics: Res<RapierContext>,
+    blocks: Query<&VoxelId>,
+    selected: Res<HexSelect>,
+    mut chunk_data: ResMut<Assets<VoxelChunk>>,
 ) {
     if !input.just_pressed(MouseButton::Right) {return;}
-    for inventory in &mut player {
-        
+    for (transform, mut inventory) in &mut player {
+        let Some((hit, normal)) = physics.cast_ray_and_get_normal(transform.translation(), transform.forward().as_vec3(), 6., false, QueryFilter::only_fixed()) else {continue;};
+        let id = vec3_to_voxelId(normal.normal);
+        let Ok(old) = blocks.get(hit) else {error!("hit block is not voxel"); continue;};
+        let id = id + *old;
+        if !id.in_chunk() {continue;}
+        let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {continue;};
+        let Some(block) = inventory.get_selected_block() else {continue;};
+        let solidity = block.is_solid();
+        let mut entity = commands.spawn((
+            id,
+            PbrBundle {
+                mesh: voxel_blocks.mesh(&block),
+                material: voxel_blocks.texture(&block),
+                transform: Transform::from_translation(id.0.as_vec3()),
+                ..Default::default()
+            },
+        ));
+        if solidity {
+            entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+        }
+        chunk.set(id.0, block.clone());
+        inventory.check_and_deduct_resources(&[(block, 1)]);
+    }
+}
+
+fn vec3_to_voxelId(vec: Vec3) -> VoxelId {
+    let abs = vec.abs();
+    
+    // x is biggest
+    if abs.x > abs.y && abs.x > abs.z {
+        if vec.x > 0. {
+            VoxelId(IVec3::X)
+        } else {
+            VoxelId(IVec3::NEG_X)
+        }
+    }
+    // y is biggest
+    else if abs.y > abs.x && abs.y > abs.z {
+        if vec.y > 0. {
+            VoxelId(IVec3::Y)
+        } else {
+            VoxelId(IVec3::NEG_Y)
+        }
+    }
+    // z is biggest
+    else if abs.z > abs.x && abs.z > abs.y {
+        if vec.z > 0. {
+            VoxelId(IVec3::Z)
+        } else {
+            VoxelId(IVec3::NEG_Z)
+        }
+    } else {
+        panic!("I dont know if this works")
     }
 }
