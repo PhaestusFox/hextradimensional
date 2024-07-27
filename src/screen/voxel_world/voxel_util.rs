@@ -67,25 +67,17 @@ impl WorldType {
         match self {
             WorldType::Empty => BlockType::Air,
             WorldType::Stone => {
-                if rng.gen_bool(0.6) || pos.y == 0 {
-                    BlockType::Stone
-                } else {
-                    BlockType::Air
-                }
+                BlockType::Stone
             }
             WorldType::Coal => {
-                if rng.gen_bool(0.3) && pos.y != 0 {
-                    BlockType::Air
-                } else if rng.gen_bool(0.25) {
+                if rng.gen_bool(0.25) {
                     BlockType::Coal
                 } else {
                     BlockType::Stone
                 }
             }
             WorldType::Iron => {
-                if rng.gen_bool(0.3) && pos.y != 0 {
-                    BlockType::Air
-                } else if rng.gen_bool(0.25) {
+                if rng.gen_bool(0.25) {
                     BlockType::IronOre
                 } else {
                     BlockType::Stone

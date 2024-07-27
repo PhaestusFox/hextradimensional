@@ -232,7 +232,7 @@ fn pos_from_enter(direction: &MapDirection) -> Vec3 {
 
 pub fn spawn_player(mut commands: Commands, hex_select: Res<HexSelect>) {
     let mut inventory = Inventory::new(60);
-    if inventory.add_resource(super::BlockType::Coal, 37) {
+    if inventory.add_resource(super::BlockType::Furnace, 30) {
         commands
             .spawn((
                 StateScoped(Screen::VoxelWorld),
