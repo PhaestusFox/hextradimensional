@@ -101,6 +101,9 @@ impl BlockType {
             BlockType::Coal => "images/voxels/coal.png",
             BlockType::Voxel(_) => "",
             BlockType::MultiVoxel(_) => "",
+            BlockType::IronBlock => "images/voxels/refined_iron.png",
+            BlockType::IronOre => "images/voxels/ore_iron.png",
+            BlockType::Furnace => "images/multi_blocks/furnace.png",
         }
     }
 
@@ -111,6 +114,9 @@ impl BlockType {
             BlockType::Coal => true,
             BlockType::Voxel(_) => false,
             BlockType::MultiVoxel(_) => false,
+            BlockType::IronOre => true,
+            BlockType::IronBlock => true,
+            BlockType::Furnace => true,
         }
     }
 }
