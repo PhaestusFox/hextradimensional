@@ -11,6 +11,7 @@ pub fn give_player_block(
             KeyCode::Numpad0 => BlockType::Stone,
             KeyCode::Numpad1 => BlockType::Coal,
             KeyCode::Numpad2 => BlockType::IronOre,
+            KeyCode::Numpad3 => BlockType::Drill,
             _ => continue,
         };
         for mut inventory in &mut player {

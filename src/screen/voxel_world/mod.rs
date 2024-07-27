@@ -94,6 +94,7 @@ pub enum BlockType {
     IronOre,
     IronBlock,
     Furnace,
+    Drill,
     Voxel(VoxelData),
     MultiVoxel(Vec<DirectedVoxel>),
 }
@@ -111,6 +112,7 @@ impl BlockType {
             BlockType::IronBlock => "images/voxels/refined_iron.png",
             BlockType::IronOre => "images/voxels/ore_iron.png",
             BlockType::Furnace => "images/multi_blocks/furnace.png",
+            BlockType::Drill => "images/voxels/refined_iron.png",
         }
     }
 
@@ -124,6 +126,7 @@ impl BlockType {
             BlockType::IronOre => true,
             BlockType::IronBlock => true,
             BlockType::Furnace => true,
+            BlockType::Drill => true,
         }
     }
 
@@ -137,6 +140,35 @@ impl BlockType {
             BlockType::IronOre => None,
             BlockType::IronBlock => None,
             BlockType::Furnace => Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0"),
+            BlockType::Drill => Some("images/multi_blocks/drill.glb#Mesh1/Primitive0"),
+        }
+    }
+
+    pub const fn melt(&self) -> Option<BlockType> {
+        match self {
+            BlockType::Air => None,
+            BlockType::Stone => None,
+            BlockType::Coal => None,
+            BlockType::IronOre => Some(BlockType::IronBlock),
+            BlockType::IronBlock => None,
+            BlockType::Furnace => None,
+            BlockType::Voxel(_) => None,
+            BlockType::MultiVoxel(_) => None,
+            BlockType::Drill => None,
+        }
+    }
+
+    pub const fn fuel(&self) -> bool {
+        match self {
+            BlockType::Air => false,
+            BlockType::Stone => false,
+            BlockType::Coal => true,
+            BlockType::IronOre => false,
+            BlockType::IronBlock => false,
+            BlockType::Furnace => false,
+            BlockType::Drill => false,
+            BlockType::Voxel(_) => false,
+            BlockType::MultiVoxel(_) => false,
         }
     }
 }

@@ -18,7 +18,7 @@ use super::{
 };
 
 #[derive(Component, Clone, Copy, Debug)]
-struct VoxelId(pub IVec3);
+pub struct VoxelId(pub IVec3);
 
 impl VoxelId {
     pub fn in_chunk(&self) -> bool {
@@ -93,8 +93,8 @@ impl VoxelChunk {
     }
 
     pub fn get(&self, pos: IVec3) -> BlockType {
-        let index =
-            pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
+        let index = pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
+        if index >= CHUNK_SIZE.pow(3) {return BlockType::Air;}
         self.0[index].clone()
     }
 }
@@ -104,6 +104,7 @@ pub(crate) fn voxel_world(app: &mut App) {
     app.init_asset::<VoxelChunk>()
     .init_resource::<multi_block::MultiBlocks>();
     app.init_asset_loader::<VoxelChunkLoader>();
+    app.add_systems(FixedUpdate, multi_block::check_for_multi_blocks);
     app.add_systems(Update, fill_world_after_load.run_if(in_state(Screen::VoxelWorld)));
     app.add_systems(OnEnter(Screen::VoxelWorld), (load_chunk, open_loaded_world).run_if(resource_changed::<HexSelect>));
     #[cfg(feature = "dev")]
