@@ -18,9 +18,10 @@ pub(crate) fn block_breaking_plugin(app: &mut App) {
         app.init_resource::<BlockBreakDebugSettings>();
         app.register_type::<BlockBreakDebugSettings>();
         app.add_systems(Update, draw_debug);
+        app.add_systems(Update, scail_breaking_block)
+        .add_systems(FixedUpdate, break_block);
     }
 }
-
 
 fn draw_debug(
     settings: Res<BlockBreakDebugSettings>,
@@ -58,6 +59,18 @@ fn break_block(
                     error!("rays should only hit voxels");
                 },
             }
+        }
+    }
+}
+
+fn scail_breaking_block(
+    mut blocks: Query<(&mut Transform, &Breaking), Changed<Breaking>>,
+) {
+    for (mut transform, breaking) in &mut blocks {
+        if breaking.0 {
+            transform.scale = Vec3::ZERO;
+        } else {
+            transform.scale = Vec3::ONE * 0.5;
         }
     }
 }
