@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game::HexSelect,
     screen::{
-        voxel_world::{item::spawn_item, voxel_util::Blocks},
+        voxel_world::{item::spawn_item, voxel_util::Blocks, BlockType},
         Screen,
     },
 };
@@ -38,6 +38,9 @@ fn drill_logic(
     };
     for extractor in &extractors {
         let below = chunk.get(extractor.0 - IVec3::Y);
+        if !below.can_mine() {
+            return;
+        }
         spawn_item(
             below,
             &voxels,

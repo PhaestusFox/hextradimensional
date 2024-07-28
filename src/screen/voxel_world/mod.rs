@@ -165,6 +165,15 @@ impl BlockType {
             }
         }
     }
+
+    pub fn can_mine(&self) -> bool {
+        match self {
+            BlockType::Basic(BasicBlock::Air) => false,
+            BlockType::Basic(_) => true,
+            BlockType::Complex(ComplexBlock::Voxel(_)) => false,
+            BlockType::Complex(_) => true,
+        }
+    }
 }
 
 impl BasicBlock {

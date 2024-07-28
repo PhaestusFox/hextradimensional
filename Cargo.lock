@@ -981,22 +981,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c115c97a5c8a263bd0aa7001b999772c744ac5ba797d07c86f25734ce381ea69"
 
 [[package]]
-name = "bevy_quickstart"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_editor_pls",
- "bevy_pkv",
- "bevy_rapier3d",
- "log",
- "rand",
- "serde",
- "serde-big-array",
- "strum",
- "strum_macros",
-]
-
-[[package]]
 name = "bevy_rapier3d"
 version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2599,6 +2583,22 @@ name = "hexf-parse"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
+
+[[package]]
+name = "hextradimensional"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_editor_pls",
+ "bevy_pkv",
+ "bevy_rapier3d",
+ "log",
+ "rand",
+ "serde",
+ "serde-big-array",
+ "strum",
+ "strum_macros",
+]
 
 [[package]]
 name = "home"
