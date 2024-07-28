@@ -1,4 +1,7 @@
-use crate::screen::{inventory::Inventory, Screen};
+use crate::{
+    game::main_character::Player,
+    screen::{inventory::Inventory, Screen},
+};
 
 use super::{
     voxel_util::{Blocks, VoxelPlayer},
@@ -38,13 +41,14 @@ pub fn pickup_item(
     mut commands: Commands,
     input: Res<ButtonInput<MouseButton>>,
     physics: Res<RapierContext>,
-    mut player: Query<(&Parent, &GlobalTransform, &mut Inventory), With<VoxelPlayer>>,
+    mut vox_player: Query<(&Parent, &GlobalTransform), With<VoxelPlayer>>,
+    mut player_inventory: Query<&mut Inventory, With<Player>>,
     mut voxels: Query<&BlockType, With<Item>>,
 ) {
     if !input.just_pressed(MouseButton::Left) {
         return;
     }
-    for (ignore, player, mut inventory) in &mut player {
+    for (ignore, player) in &mut vox_player {
         if let Some((hit, _)) = physics.cast_ray(
             player.translation(),
             player.forward().as_vec3(),
@@ -54,7 +58,7 @@ pub fn pickup_item(
         ) {
             if let Ok(block) = voxels.get_mut(hit) {
                 commands.entity(hit).despawn();
-                inventory.add_resource(*block, 1);
+                player_inventory.single_mut().add_resource(*block, 1);
             }
         }
     }

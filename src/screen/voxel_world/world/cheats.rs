@@ -1,12 +1,15 @@
 use bevy::prelude::*;
 
-use crate::screen::{
-    inventory::Inventory,
-    voxel_world::{voxel_util::VoxelPlayer, BasicBlock, BlockType, ComplexBlock},
+use crate::{
+    game::main_character::Player,
+    screen::{
+        inventory::Inventory,
+        voxel_world::{voxel_util::VoxelPlayer, BasicBlock, BlockType, ComplexBlock},
+    },
 };
 
 pub fn give_player_block(
-    mut player: Query<&mut Inventory, With<VoxelPlayer>>,
+    mut player: Query<&mut Inventory, With<Player>>,
     input: Res<ButtonInput<KeyCode>>,
 ) {
     for key in input.get_just_pressed() {

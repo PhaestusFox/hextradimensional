@@ -9,7 +9,6 @@ mod splash;
 mod title;
 pub mod voxel_world;
 
-use crate::game;
 use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {

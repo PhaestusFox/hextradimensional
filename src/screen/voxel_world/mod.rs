@@ -7,13 +7,13 @@ pub mod world;
 
 mod item;
 
-use super::{hex_vox_util::MapDirection, inventory::Inventory, Screen};
+use super::{inventory::Inventory, Screen};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 use bevy::{ecs::system::EntityCommands, input::common_conditions::input_just_pressed, prelude::*};
 use player_controller::spawn_player;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
-use std::{fmt::Debug, sync::Arc};
+use std::fmt::Debug;
 use ui::{
     cleanup_inventory_ui, handle_slot_selection, setup_inventory_ui, toggle_full_inventory,
     update_inventory_ui,
@@ -37,7 +37,6 @@ pub(super) fn plugin(app: &mut App) {
         OnExit(Screen::VoxelWorld),
         (exit_playing, cleanup_inventory_ui),
     );
-    //.add_systems(Update, update_inventory_ui);
 
     app.add_systems(
         Update,
@@ -49,7 +48,6 @@ pub(super) fn plugin(app: &mut App) {
         toggle_full_inventory
             .run_if(in_state(Screen::VoxelWorld).and_then(input_just_pressed(KeyCode::KeyT))),
     );
-    app.add_systems(Update, update_inventory_ui);
     app.init_resource::<Blocks>();
     app.add_plugins(player_controller::VoxelCamera);
     app.register_type::<Inventory>();

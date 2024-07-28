@@ -1,5 +1,5 @@
 use crate::{
-    game::HexSelect,
+    game::{main_character::Player, HexSelect},
     screen::{
         inventory::Inventory,
         voxel_world::{
@@ -109,7 +109,7 @@ fn break_block(
 
 fn pickup_block(
     mut commands: Commands,
-    mut player: Query<&mut Inventory, With<VoxelPlayer>>,
+    mut player: Query<&mut Inventory, With<Player>>,
     blocks: Query<(Entity, &Breaking, &VoxelId), Changed<Breaking>>,
     selected: Res<HexSelect>,
     mut chunk_data: ResMut<Assets<VoxelChunk>>,
@@ -156,7 +156,8 @@ fn scail_breaking_block(
 fn block_placing(
     mut commands: Commands,
     voxel_blocks: Res<Blocks>,
-    mut player: Query<(&GlobalTransform, &mut Inventory), With<VoxelPlayer>>,
+    mut inventory: Query<(&mut Inventory), With<Player>>,
+    transform: Query<(&GlobalTransform), With<VoxelPlayer>>,
     input: Res<ButtonInput<MouseButton>>,
     physics: Res<RapierContext>,
     blocks: Query<&VoxelId>,
@@ -166,49 +167,49 @@ fn block_placing(
     if !input.just_pressed(MouseButton::Right) {
         return;
     }
-    for (transform, mut inventory) in &mut player {
-        let Some((hit, normal)) = physics.cast_ray_and_get_normal(
-            transform.translation(),
-            transform.forward().as_vec3(),
-            6.,
-            false,
-            QueryFilter::only_fixed(),
-        ) else {
-            continue;
-        };
-        let id = vec3_to_voxelId(normal.normal);
-        let Ok(old) = blocks.get(hit) else {
-            error!("hit block is not voxel");
-            continue;
-        };
-        let id = id + *old;
-        if !id.in_chunk() {
-            continue;
-        }
-        let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
-            continue;
-        };
-        let Some(block) = inventory.get_selected_block() else {
-            continue;
-        };
-        let mut entity = commands.spawn((
-            StateScoped(Screen::VoxelWorld),
-            Name::new("Voxel Block Placed"),
-            id,
-            PbrBundle {
-                mesh: voxel_blocks.mesh(&block),
-                material: voxel_blocks.texture(&block),
-                transform: Transform::from_translation(id.0.as_vec3()),
-                ..Default::default()
-            },
-        ));
-        block.add_components(&mut entity);
-        if block.is_solid() {
-            entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
-        }
-        chunk.set(id.0, block.clone());
-        inventory.check_and_deduct_resources(&[(block, 1)]);
+
+    let Some((hit, normal)) = physics.cast_ray_and_get_normal(
+        transform.single().translation(),
+        transform.single().forward().as_vec3(),
+        6.,
+        false,
+        QueryFilter::only_fixed(),
+    ) else {
+        return;
+    };
+    let id = vec3_to_voxelId(normal.normal);
+    let Ok(old) = blocks.get(hit) else {
+        panic!("hit block is not voxel");
+    };
+    let id = id + *old;
+    if !id.in_chunk() {
+        return;
     }
+    let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
+        return;
+    };
+    let Some(block) = inventory.single().get_selected_block() else {
+        return;
+    };
+    let mut entity = commands.spawn((
+        StateScoped(Screen::VoxelWorld),
+        Name::new("Voxel Block Placed"),
+        id,
+        PbrBundle {
+            mesh: voxel_blocks.mesh(&block),
+            material: voxel_blocks.texture(&block),
+            transform: Transform::from_translation(id.0.as_vec3()),
+            ..Default::default()
+        },
+    ));
+    block.add_components(&mut entity);
+    if block.is_solid() {
+        entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+    }
+    chunk.set(id.0, block.clone());
+    inventory
+        .single_mut()
+        .check_and_deduct_resources(&[(block, 1)]);
 }
 
 fn vec3_to_voxelId(vec: Vec3) -> VoxelId {

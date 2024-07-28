@@ -1,4 +1,5 @@
 use bevy::{
+    core::Name,
     ecs::query::QueryData,
     prelude::{
         Commands, Component, GlobalTransform, InheritedVisibility, ReflectComponent,
@@ -21,6 +22,7 @@ pub struct Seed(pub u64);
 
 pub fn spawn_main_player(mut commands: Commands) {
     commands.spawn((
+        Name::new("Saved Player"),
         Player,
         Inventory::new(60),
         InheritedVisibility::VISIBLE,
