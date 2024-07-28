@@ -5,7 +5,7 @@ use bevy_rapier3d::{
 };
 
 use crate::{
-    game::HexSelect,
+    game::{assets::SfxKey, audio::sfx::PlaySfx, HexSelect},
     screen::{
         voxel_world::{
             item::{spawn_item, Item},
@@ -116,6 +116,7 @@ fn melter_logic(
         if let Some(melt) = melt.melt() {
             *up = melt;
             commands.entity(down).despawn();
+            commands.trigger(PlaySfx::Key(SfxKey::Melt));
         }
     }
 }
@@ -154,8 +155,11 @@ fn score_logic(
         };
 
         if block == &target.0 {
+            commands.trigger(PlaySfx::Key(SfxKey::Progress));
             target.0 = next_target.next();
             score.0 += 1;
+        } else {
+            commands.trigger(PlaySfx::Key(SfxKey::NoProgress));
         }
 
         commands.entity(up).despawn();

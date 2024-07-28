@@ -204,7 +204,6 @@ fn spawn_voxel(
     if block == BlockType::Air {
         return;
     };
-    println!("trying to load {:?}", block);
     let data = voxels.get(block);
     let data = voxel_data.get(data.id()).expect("all blocks loaded");
     let mut entity = commands.spawn((

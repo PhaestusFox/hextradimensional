@@ -51,6 +51,9 @@ pub enum SfxKey {
     HitOne,
     HitTwo,
     HitThree,
+    Progress,
+    NoProgress,
+    Melt,
 }
 
 impl AssetKey for SfxKey {
@@ -74,6 +77,15 @@ impl FromWorld for HandleMap<SfxKey> {
             (SfxKey::Step3, asset_server.load("audio/sfx/step3.ogg")),
             (SfxKey::Step4, asset_server.load("audio/sfx/step4.ogg")),
             (SfxKey::HitOne, asset_server.load("audio/sfx/hit_one.ogg")),
+            (
+                SfxKey::Progress,
+                asset_server.load("audio/sfx/progress.ogg"),
+            ),
+            (
+                SfxKey::NoProgress,
+                asset_server.load("audio/sfx/no_progress.ogg"),
+            ),
+            (SfxKey::Melt, asset_server.load("audio/sfx/cook.ogg")),
             (SfxKey::HitTwo, asset_server.load("audio/sfx/hit_two.ogg")),
             (
                 SfxKey::HitThree,
