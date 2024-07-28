@@ -65,7 +65,7 @@ impl WorldType {
 
     pub fn sample(&self, rng: &mut impl Rng, pos: IVec3) -> BlockType {
         if pos.y == -1 {
-            return BlockType::Complex(ComplexBlock::BedRock);
+            return BlockType::Basic(BasicBlock::BedRock);
         }
         match self {
             WorldType::Empty => BlockType::Basic(BasicBlock::Air),

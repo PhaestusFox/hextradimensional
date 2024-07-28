@@ -83,13 +83,13 @@ pub enum BasicBlock {
     Coal,
     IronOre,
     IronBlock,
+    BedRock,
 }
 
 #[derive(Asset, Debug, Serialize, Deserialize, Clone, PartialEq, Copy, Eq, Reflect, Hash)]
 pub enum ComplexBlock {
     Furnace,
     Drill,
-    BedRock,
     Voxel(#[serde(with = "BigArray")] [BasicBlock; VOXEL_DIVISION_FACTOR.pow(3)]),
 }
 
@@ -97,12 +97,13 @@ pub enum ComplexBlock {
 
 impl BlockType {
     pub fn iter() -> std::slice::Iter<'static, Self> {
-        static BLOCKS: [BlockType; 8] = [
+        static BLOCKS: [BlockType; 9] = [
             BlockType::Basic(BasicBlock::Air),
             BlockType::Basic(BasicBlock::Stone),
             BlockType::Basic(BasicBlock::Coal),
             BlockType::Basic(BasicBlock::IronOre),
             BlockType::Basic(BasicBlock::IronBlock),
+            BlockType::Basic(BasicBlock::BedRock),
             BlockType::Complex(ComplexBlock::Furnace),
             BlockType::Complex(ComplexBlock::Drill),
             BlockType::Complex(ComplexBlock::Voxel(
@@ -158,6 +159,7 @@ impl BasicBlock {
             BasicBlock::Coal => "images/voxels/coal.png",
             BasicBlock::IronOre => "images/voxels/ore_iron.png",
             BasicBlock::IronBlock => "images/voxels/refined_iron.png",
+            BasicBlock::BedRock => "images/voxels/bedrock.png",
         }
     }
 
@@ -171,7 +173,6 @@ impl ComplexBlock {
         match self {
             ComplexBlock::Furnace => "images/multi_blocks/furnace.png",
             ComplexBlock::Drill => "images/voxels/refined_iron.png",
-            ComplexBlock::BedRock => "images/voxels/bedrock.png",
             ComplexBlock::Voxel(_) => "",
         }
     }
