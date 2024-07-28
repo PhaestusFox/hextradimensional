@@ -5,7 +5,7 @@ use bevy::{
 };
 
 use super::{interaction::InteractionPalette, palette::*};
-use crate::screen::voxel_world::inventory::{Inventory, InventorySlot};
+use crate::screen::inventory::{Inventory, InventorySlot};
 use crate::screen::voxel_world::ui::FullInventoryUI;
 
 // Define the UiRoot component

@@ -1,6 +1,6 @@
 use bevy::{prelude::Component, reflect::Reflect};
 
-use super::BlockType;
+use crate::voxel_world::BlockType;
 
 /// Define a struct for inventory slots
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future
@@ -10,7 +10,7 @@ pub struct InventorySlot {
     pub quantity: u32,
 }
 
-/// This is the inventory component, meant to be used in conjunction with VoxelPlayer
+/// This is the inventory component, meant to be used in conjunction with Player
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future
 #[derive(Component, Reflect)]
 pub struct Inventory {

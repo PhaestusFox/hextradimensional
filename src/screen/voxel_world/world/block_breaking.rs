@@ -1,8 +1,8 @@
 use crate::{
     game::HexSelect,
     screen::{
+        inventory::Inventory,
         voxel_world::{
-            inventory::Inventory,
             voxel_util::{Blocks, VoxelPlayer},
             BasicBlock, BlockType,
         },

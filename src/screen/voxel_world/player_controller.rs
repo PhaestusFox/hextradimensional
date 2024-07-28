@@ -1,6 +1,9 @@
 use crate::{
     game::HexSelect,
-    screen::{hex_vox_util::MapDirection, voxel_world::voxel_util::VoxelPlayer, Screen},
+    screen::{
+        hex_vox_util::MapDirection, inventory::Inventory, voxel_world::voxel_util::VoxelPlayer,
+        Screen,
+    },
 };
 
 use bevy::{
@@ -14,7 +17,7 @@ use bevy_rapier3d::prelude::{
     RigidBody,
 };
 
-use super::{inventory::Inventory, BlockType, ComplexBlock};
+use super::{BlockType, ComplexBlock};
 
 pub struct VoxelCamera;
 

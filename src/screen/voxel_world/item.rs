@@ -1,7 +1,6 @@
-use crate::screen::Screen;
+use crate::screen::{inventory::Inventory, Screen};
 
 use super::{
-    inventory::Inventory,
     voxel_util::{Blocks, VoxelPlayer},
     BlockType,
 };

@@ -1,5 +1,5 @@
 //! The screen state for the voxel world game loop.
-pub mod inventory;
+
 mod player_controller;
 pub mod ui;
 pub mod voxel_util;
@@ -7,10 +7,9 @@ pub mod world;
 
 mod item;
 
-use super::{hex_vox_util::MapDirection, Screen};
+use super::{hex_vox_util::MapDirection, inventory::Inventory, Screen};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 use bevy::{ecs::system::EntityCommands, input::common_conditions::input_just_pressed, prelude::*};
-use inventory::Inventory;
 use player_controller::spawn_player;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;

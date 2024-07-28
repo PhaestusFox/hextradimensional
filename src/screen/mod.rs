@@ -3,6 +3,7 @@
 mod credits;
 mod hex_map;
 pub mod hex_vox_util;
+pub mod inventory;
 mod loading;
 mod splash;
 mod title;

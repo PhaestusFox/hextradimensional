@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
-use crate::screen::voxel_world::{
-    inventory::Inventory, voxel_util::VoxelPlayer, BasicBlock, BlockType, ComplexBlock,
+use crate::screen::{
+    inventory::Inventory,
+    voxel_world::{voxel_util::VoxelPlayer, BasicBlock, BlockType, ComplexBlock},
 };
 
 pub fn give_player_block(

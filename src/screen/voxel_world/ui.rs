@@ -1,6 +1,9 @@
 use super::voxel_util::VoxelPlayer;
-use crate::screen::voxel_world::inventory::Inventory;
-use crate::ui::widgets::{Containers, UiRoot, Widgets};
+
+use crate::{
+    screen::inventory::Inventory,
+    ui::widgets::{Containers, UiRoot, Widgets},
+};
 use bevy::prelude::*; // Adjust this path as needed
 
 #[derive(Component)]
