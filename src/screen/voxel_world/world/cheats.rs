@@ -17,7 +17,7 @@ pub fn give_player_block(
             KeyCode::Numpad0 => BlockType::Stone,
             KeyCode::Numpad1 => BlockType::Coal,
             KeyCode::Numpad2 => BlockType::IronOre,
-            KeyCode::Numpad3 => BlockType::Drill,
+            KeyCode::Numpad3 => BlockType::Drill(crate::screen::hex_vox_util::MapDirection::Up),
             KeyCode::Numpad4 => BlockType::Score,
             KeyCode::Numpad5 => BlockType::Piston(crate::screen::hex_vox_util::MapDirection::Up),
             _ => continue,

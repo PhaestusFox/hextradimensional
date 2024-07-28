@@ -38,7 +38,7 @@ pub struct Melter;
 
 fn drill_logic(
     selected: Res<HexSelect>,
-    extractors: Query<&VoxelId, With<Extractor>>,
+    extractors: Query<(&VoxelId, &Transform), With<Extractor>>,
     mut commands: Commands,
     voxels: Res<Blocks>,
     data: Res<Assets<Block>>,
@@ -47,8 +47,8 @@ fn drill_logic(
     let Some(chunk) = chunks.get(selected.chunk.id()) else {
         return;
     };
-    for extractor in &extractors {
-        let below = chunk.get(extractor.0 - IVec3::Y);
+    for (extractor, pos) in &extractors {
+        let below = chunk.get(extractor.0 + pos.down().as_ivec3());
         let block = voxels.get(below);
         let block = data.get(block.id()).expect("all blocks loaded");
         if !block.can_mine() {
@@ -58,7 +58,7 @@ fn drill_logic(
             below,
             &data,
             &voxels,
-            (extractor.0 + IVec3::Y).as_vec3(),
+            extractor.0.as_vec3() + pos.up().as_vec3(),
             &mut commands,
         )
     }

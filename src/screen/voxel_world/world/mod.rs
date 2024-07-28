@@ -108,6 +108,12 @@ impl VoxelChunk {
         if pos.y == -1 {
             return BlockType::BedRock;
         }
+        if pos.z == -1 {
+            return BlockType::Air;
+        }
+        if pos.x == -1 {
+            return BlockType::Air;
+        }
         let index =
             pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
         if index >= CHUNK_SIZE.pow(3) {
