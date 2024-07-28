@@ -4,7 +4,7 @@ use crate::{
     game::main_character::Player,
     screen::{
         inventory::Inventory,
-        voxel_world::{voxel_util::VoxelPlayer, BasicBlock, BlockType, ComplexBlock},
+        voxel_world::{voxel_util::VoxelPlayer, voxels::BlockType},
     },
 };
 
@@ -14,11 +14,11 @@ pub fn give_player_block(
 ) {
     for key in input.get_just_pressed() {
         let give = match key {
-            KeyCode::Numpad0 => BlockType::Basic(BasicBlock::Stone),
-            KeyCode::Numpad1 => BlockType::Basic(BasicBlock::Coal),
-            KeyCode::Numpad2 => BlockType::Basic(BasicBlock::IronOre),
-            KeyCode::Numpad3 => BlockType::Complex(ComplexBlock::Drill),
-            KeyCode::Numpad4 => BlockType::Basic(BasicBlock::Score),
+            KeyCode::Numpad0 => BlockType::Stone,
+            KeyCode::Numpad1 => BlockType::Coal,
+            KeyCode::Numpad2 => BlockType::IronOre,
+            KeyCode::Numpad3 => BlockType::Drill,
+            KeyCode::Numpad4 => BlockType::Score,
             _ => continue,
         };
         for mut inventory in &mut player {

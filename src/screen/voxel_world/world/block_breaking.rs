@@ -3,8 +3,8 @@ use crate::{
     screen::{
         inventory::Inventory,
         voxel_world::{
-            voxel_util::{Blocks, VoxelPlayer},
-            BasicBlock, BlockType,
+            voxel_util::VoxelPlayer,
+            voxels::{Block, BlockType, Blocks},
         },
         Screen,
     },
@@ -120,8 +120,8 @@ fn pickup_block(
                 let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
                     continue;
                 };
-                let out = chunk.set(id.0, BlockType::Basic(BasicBlock::Air));
-                if out == BlockType::Basic(BasicBlock::Air) {
+                let out = chunk.set(id.0, BlockType::Air);
+                if out == BlockType::Air {
                     warn!("Removed Air");
                     continue;
                 };
@@ -163,6 +163,8 @@ fn block_placing(
     blocks: Query<&VoxelId>,
     selected: Res<HexSelect>,
     mut chunk_data: ResMut<Assets<VoxelChunk>>,
+    voxels: Res<Blocks>,
+    voxel_data: Res<Assets<Block>>,
 ) {
     if !input.just_pressed(MouseButton::Right) {
         return;
@@ -188,16 +190,17 @@ fn block_placing(
     let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
         return;
     };
-    let Some(block) = inventory.single().get_selected_block() else {
+    let Some(block_type) = inventory.single().get_selected_block() else {
         return;
     };
+    let block = voxels.get(block_type);
+    let block = voxel_data.get(block.id()).expect("All blocks loaded");
     let mut entity = commands.spawn((
-        StateScoped(Screen::VoxelWorld),
-        Name::new("Voxel Block Placed"),
+        Name::new("Test Block"),
         id,
         PbrBundle {
-            mesh: voxel_blocks.mesh(&block),
-            material: voxel_blocks.texture(&block),
+            mesh: block.mesh(),
+            material: block.material(),
             transform: Transform::from_translation(id.0.as_vec3()),
             ..Default::default()
         },
@@ -206,10 +209,10 @@ fn block_placing(
     if block.is_solid() {
         entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
     }
-    chunk.set(id.0, block.clone());
+    chunk.set(id.0, block_type);
     inventory
         .single_mut()
-        .check_and_deduct_resources(&[(block, 1)]);
+        .check_and_deduct_resources(&[(block_type, 1)]);
 }
 
 fn vec3_to_voxelId(vec: Vec3) -> VoxelId {

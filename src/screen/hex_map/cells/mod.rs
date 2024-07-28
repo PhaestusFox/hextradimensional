@@ -25,10 +25,10 @@ pub(crate) fn update_transforms(mut hexagons: Query<(&mut Transform, &HexId), Ch
 }
 
 #[derive(Resource)]
-pub struct CellIcons(HashMap<HexagonType, Handle<Image>>);
+pub struct CellIcons(HashMap<WorldType, Handle<Image>>);
 
 impl CellIcons {
-    pub fn get(&self, hex: HexagonType) -> Handle<Image> {
+    pub fn get(&self, hex: WorldType) -> Handle<Image> {
         self.0.get(&hex).cloned().unwrap_or_default()
     }
 }
@@ -37,44 +37,12 @@ impl FromWorld for CellIcons {
     fn from_world(world: &mut bevy::prelude::World) -> Self {
         let mut icons = CellIcons(HashMap::default());
         let asset_server = world.resource::<AssetServer>();
-        for hex in HexagonType::iter() {
+        for hex in WorldType::iter() {
             icons.0.insert(
                 hex,
                 asset_server.load(format!("images/hexes/{:?}.png", hex).to_lowercase()),
             );
         }
         icons
-    }
-}
-
-#[derive(
-    Default,
-    Component,
-    PartialEq,
-    Eq,
-    Debug,
-    strum_macros::EnumIter,
-    Hash,
-    Clone,
-    Copy,
-    serde::Deserialize,
-    serde::Serialize,
-)]
-pub enum HexagonType {
-    #[default]
-    Empty,
-    Stone,
-    Coal,
-    Iron,
-}
-
-impl Into<WorldType> for HexagonType {
-    fn into(self) -> WorldType {
-        match self {
-            HexagonType::Empty => WorldType::Empty,
-            HexagonType::Stone => WorldType::Stone,
-            HexagonType::Coal => WorldType::Coal,
-            HexagonType::Iron => WorldType::Iron,
-        }
     }
 }

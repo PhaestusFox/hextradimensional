@@ -3,7 +3,9 @@ use crate::{
     screen::inventory::Inventory,
     ui::widgets::{Containers, UiRoot, Widgets},
 };
-use bevy::prelude::*; // Adjust this path as needed
+use bevy::prelude::*;
+
+use super::voxels::{Block, Blocks}; // Adjust this path as needed
 
 #[derive(Component)]
 pub struct FullInventoryUI;
@@ -12,13 +14,16 @@ pub fn setup_inventory_ui(
     mut commands: Commands,
     player_query: Query<(&Inventory, &Player)>,
     server: Res<AssetServer>,
+    voxels: Res<Blocks>,
+    voxel_data: Res<Assets<Block>>,
+    materials: Res<Assets<StandardMaterial>>,
 ) {
     if let Ok(player_inventory) = player_query.get_single() {
         commands
             .ui_root() // Assuming you have this method from the Containers trait
             .with_children(|parent| {
-                parent.hotbar(player_inventory.0, &server);
-                parent.full_inventory(player_inventory.0, &server);
+                parent.hotbar(player_inventory.0, &voxels, &voxel_data, &materials);
+                parent.full_inventory(player_inventory.0, &voxels, &voxel_data, &materials);
             });
     }
 }
@@ -45,7 +50,9 @@ pub fn update_inventory_ui(
     mut commands: Commands,
     player_query: Query<&Inventory, (With<Player>, Changed<Inventory>)>,
     ui_root_query: Query<Entity, With<UiRoot>>,
-    asset_server: Res<AssetServer>,
+    voxels: Res<Blocks>,
+    voxel_data: Res<Assets<Block>>,
+    materials: Res<Assets<StandardMaterial>>,
 ) {
     if let Ok(inventory) = player_query.get_single() {
         if let Ok(ui_root) = ui_root_query.get_single() {
@@ -54,8 +61,8 @@ pub fn update_inventory_ui(
 
             // Spawn the new inventory UI
             commands.entity(ui_root).with_children(|parent| {
-                parent.hotbar(inventory, &asset_server);
-                parent.full_inventory(inventory, &asset_server);
+                parent.hotbar(inventory, &voxels, &voxel_data, &materials);
+                parent.full_inventory(inventory, &voxels, &voxel_data, &materials);
             });
         }
     }

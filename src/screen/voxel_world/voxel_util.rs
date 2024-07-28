@@ -5,13 +5,13 @@ use rand::{Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
-use super::{BasicBlock, BlockType, ComplexBlock};
+use super::voxels::BlockType;
 
 pub struct VoxelPlugin;
 
 impl Plugin for VoxelPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Blocks>().add_plugins(VoxelCamera);
+        //app.init_resource::<BlocksOld>().add_plugins(VoxelCamera);
     }
 }
 
@@ -19,13 +19,26 @@ impl Plugin for VoxelPlugin {
 #[derive(Component)]
 pub struct VoxelPlayer;
 
-#[derive(PartialEq, Eq, Serialize, Deserialize, Default, Debug, Clone, Copy)]
+#[derive(
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    Debug,
+    Clone,
+    Copy,
+    Hash,
+    strum_macros::EnumIter,
+    Component,
+)]
 pub enum WorldType {
     #[default]
     Empty,
     Stone,
     Coal,
     Iron,
+    Sand,
 }
 
 #[derive(Resource)]
@@ -65,71 +78,86 @@ impl WorldType {
 
     pub fn sample(&self, rng: &mut impl Rng, pos: IVec3) -> BlockType {
         if pos.y == -1 {
-            return BlockType::Basic(BasicBlock::BedRock);
+            return BlockType::BedRock;
         }
         match self {
-            WorldType::Empty => BlockType::Basic(BasicBlock::Air),
-            WorldType::Stone => BlockType::Basic(BasicBlock::Stone),
+            WorldType::Empty => BlockType::Air,
+            WorldType::Stone => BlockType::Stone,
             WorldType::Coal => {
                 if rng.gen_bool(0.25) {
-                    BlockType::Basic(BasicBlock::Coal)
+                    BlockType::Coal
                 } else {
-                    BlockType::Basic(BasicBlock::Stone)
+                    BlockType::Stone
                 }
             }
             WorldType::Iron => {
                 if rng.gen_bool(0.25) {
-                    BlockType::Basic(BasicBlock::IronOre)
+                    BlockType::IronOre
                 } else {
-                    BlockType::Basic(BasicBlock::Stone)
+                    BlockType::Stone
+                }
+            }
+            WorldType::Sand => {
+                if pos.y > 10 {
+                    BlockType::Air
+                } else if pos.y == 10 && rng.gen_bool(0.90) {
+                    BlockType::Air
+                } else if pos.y == 9 && rng.gen_bool(0.60) {
+                    BlockType::Air
+                } else if pos.y == 8 && rng.gen_bool(0.30) {
+                    BlockType::Air
+                } else if pos.y == 7 && rng.gen_bool(0.10) {
+                    BlockType::Air
+                } else {
+                    BlockType::Sand
                 }
             }
         }
     }
 }
 
-#[derive(Resource)]
-pub struct Blocks {
-    meshs: HashMap<BlockType, Handle<Mesh>>,
-    textures: HashMap<BlockType, Handle<StandardMaterial>>,
-}
+// #[derive(Resource)]
+// pub struct BlocksOld {
+//     meshs: HashMap<BlockType, Handle<Mesh>>,
+//     textures: HashMap<BlockType, Handle<StandardMaterial>>,
+// }
 
-impl Blocks {
-    pub fn texture(&self, block: &BlockType) -> Handle<StandardMaterial> {
-        self.textures.get(block).cloned().unwrap_or_default()
-    }
-    pub fn mesh(&self, block: &BlockType) -> Handle<Mesh> {
-        self.meshs.get(block).cloned().unwrap_or_default()
-    }
-}
+// impl BlocksOld {
+//     pub fn texture(&self, block: &BlockType) -> Handle<StandardMaterial> {
+//         self.textures.get(block).cloned().unwrap_or_default()
+//     }
+//     pub fn mesh(&self, block: &BlockType) -> Handle<Mesh> {
+//         self.meshs.get(block).cloned().unwrap_or_default()
+//     }
+// }
 
-impl FromWorld for Blocks {
-    fn from_world(world: &mut World) -> Self {
-        let mut blocks = Blocks {
-            meshs: HashMap::default(),
-            textures: HashMap::default(),
-        };
-        let asset_server = world.resource::<AssetServer>().clone();
-        world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
-            let mut meshes = world.resource_mut::<Assets<Mesh>>();
-            let default = meshes.add(Cuboid::from_length(1.));
-            for block in BlockType::iter() {
-                let texture_path = block.texture_path();
-                let mesh_path = block.mesh_path();
-                blocks.textures.insert(
-                    block.clone(),
-                    materials.add(StandardMaterial {
-                        base_color_texture: Some(asset_server.load(texture_path)),
-                        ..Default::default()
-                    }),
-                );
-                if let Some(mesh) = mesh_path {
-                    blocks.meshs.insert(*block, asset_server.load(mesh));
-                } else {
-                    blocks.meshs.insert(*block, default.clone());
-                }
-            }
-        });
-        blocks
-    }
-}
+// impl FromWorld for BlocksOld {
+//     fn from_world(world: &mut World) -> Self {
+//         let mut blocks = BlocksOld {
+//             meshs: HashMap::default(),
+//             textures: HashMap::default(),
+//         };
+//         let asset_server = world.resource::<AssetServer>().clone();
+//         world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
+//             let mut meshes = world.resource_mut::<Assets<Mesh>>();
+//             let default = meshes.add(Cuboid::from_length(1.));
+//             for block in BlockType::iter() {
+//                 let texture_path = block.texture_path();
+//                 let mesh_path = block.mesh_path();
+//                 blocks.textures.insert(
+//                     block.clone(),
+//                     materials.add(StandardMaterial {
+//                         base_color_texture: Some(asset_server.load(texture_path)),
+//                         ..Default::default()
+//                     }),
+//                 );
+//                 if let Some(mesh) = mesh_path {
+//                     blocks.meshs.insert(*block, asset_server.load(mesh));
+//                 } else {
+//                     blocks.meshs.insert(*block, default.clone());
+//                 }
+//             }
+//         });
+//         blocks
+//     }
+// }

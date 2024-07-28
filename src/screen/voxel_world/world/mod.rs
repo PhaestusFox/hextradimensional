@@ -16,8 +16,8 @@ use block_breaking::block_breaking_plugin;
 use rand::SeedableRng;
 
 use super::{
-    voxel_util::{Blocks, WorldType},
-    BasicBlock, BlockType, ComplexBlock,
+    voxel_util::WorldType,
+    voxels::{Block, BlockType, Blocks},
 };
 
 pub mod voxel_logic;
@@ -68,7 +68,7 @@ pub struct VoxelChunk([BlockType; CHUNK_SIZE.pow(3)]);
 
 impl VoxelChunk {
     fn new() -> VoxelChunk {
-        VoxelChunk(std::array::from_fn(|_| BlockType::Basic(BasicBlock::Air)))
+        VoxelChunk(std::array::from_fn(|_| BlockType::Air))
     }
 
     fn from_hex(hex: &WorldType, rng: &mut impl rand::Rng) -> VoxelChunk {
@@ -95,7 +95,7 @@ impl VoxelChunk {
             || pos.z >= CHUNK_SIZE as i32
             || pos.z < 0
         {
-            return BlockType::Basic(BasicBlock::Air);
+            return BlockType::Air;
         }
         let index =
             pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
@@ -106,12 +106,12 @@ impl VoxelChunk {
 
     pub fn get(&self, pos: IVec3) -> BlockType {
         if pos.y == -1 {
-            return BlockType::Basic(BasicBlock::BedRock);
+            return BlockType::BedRock;
         }
         let index =
             pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
         if index >= CHUNK_SIZE.pow(3) {
-            return BlockType::Basic(BasicBlock::Air);
+            return BlockType::Air;
         }
         self.0[index].clone()
     }
@@ -147,13 +147,14 @@ fn open_loaded_world(
     change: Res<HexSelect>,
     chunks: Res<Assets<VoxelChunk>>,
     blocks: Res<Blocks>,
+    data: Res<Assets<Block>>,
 ) {
     if let Some(chunk) = chunks.get(change.chunk.id()) {
-        fill_world(chunk, &mut commands, &blocks);
+        fill_world(chunk, &mut commands, &blocks, &data);
     }
 }
 
-fn fill_world(chunk: &VoxelChunk, commands: &mut Commands, blocks: &Blocks) {
+fn fill_world(chunk: &VoxelChunk, commands: &mut Commands, blocks: &Blocks, data: &Assets<Block>) {
     commands
         .spawn((
             SpatialBundle::default(),
@@ -166,7 +167,7 @@ fn fill_world(chunk: &VoxelChunk, commands: &mut Commands, blocks: &Blocks) {
                     for z in 0..CHUNK_SIZE as i32 {
                         let id = IVec3::new(x, y, z);
                         let block = chunk.get(id);
-                        spawn_voxel(block, blocks, id, commands);
+                        spawn_voxel(block, blocks, id, commands, data);
                     }
                 }
             }
@@ -185,29 +186,7 @@ fn fill_world_after_load(
         match event {
             AssetEvent::Added { id } => {
                 let chunk = chunks.get(id.clone()).expect("just loaded");
-                if chunk.get(IVec3::new(0, 0, 0)) == BlockType::Basic(BasicBlock::Stone) {
-                    let id = voxel_lookup.get(super::voxels::BlockType::Stone);
-                    let Some(block) = voxels.get(id.id()) else {
-                        error!("Stone not loaded");
-                        return;
-                    };
-                    let id = IVec3::new(0, 17, 0);
-                    let mut entity = commands.spawn((
-                        Name::new("Test Block"),
-                        VoxelId(id),
-                        PbrBundle {
-                            mesh: block.mesh(),
-                            material: block.material(),
-                            transform: Transform::from_translation(id.as_vec3()),
-                            ..Default::default()
-                        },
-                    ));
-                    block.add_components(&mut entity);
-                    if block.is_solid() {
-                        entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
-                    }
-                }
-                fill_world(chunk, &mut commands, &blocks);
+                fill_world(chunk, &mut commands, &blocks, &voxels);
             }
             AssetEvent::Modified { id } => {}
             _ => {}
@@ -215,19 +194,30 @@ fn fill_world_after_load(
     }
 }
 
-fn spawn_voxel(block: BlockType, voxels: &Blocks, offset: IVec3, commands: &mut ChildBuilder) {
+fn spawn_voxel(
+    block: BlockType,
+    voxels: &Blocks,
+    offset: IVec3,
+    commands: &mut ChildBuilder,
+    voxel_data: &Assets<Block>,
+) {
+    if block == BlockType::Air {
+        return;
+    };
+    let data = voxels.get(block);
+    let data = voxel_data.get(data.id()).expect("all blocks loaded");
     let mut entity = commands.spawn((
         Name::new("Voxel Block"),
         VoxelId(offset),
         PbrBundle {
-            mesh: voxels.mesh(&block),
-            material: voxels.texture(&block),
+            mesh: data.mesh(),
+            material: data.material(),
             transform: Transform::from_translation(offset.as_vec3()),
             ..Default::default()
         },
     ));
-    block.add_components(&mut entity);
-    if block.is_solid() {
+    data.add_components(&mut entity);
+    if data.is_solid() {
         entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
     }
 }

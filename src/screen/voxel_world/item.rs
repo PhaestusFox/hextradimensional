@@ -4,8 +4,8 @@ use crate::{
 };
 
 use super::{
-    voxel_util::{Blocks, VoxelPlayer},
-    BlockType,
+    voxel_util::VoxelPlayer,
+    voxels::{Block, BlockType, Blocks},
 };
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -21,16 +21,24 @@ impl Plugin for ItemPlugin {
 #[derive(Component)]
 pub struct Item;
 
-pub fn spawn_item(block: BlockType, voxels: &Blocks, offset: Vec3, commands: &mut Commands) {
+pub fn spawn_item(
+    block_type: BlockType,
+    blocks: &Assets<Block>,
+    voxels: &Blocks,
+    offset: Vec3,
+    commands: &mut Commands,
+) {
+    let block = voxels.get(block_type);
+    let block = blocks.get(block.id()).expect("All Blocks loaded");
     commands.spawn((
         Item,
         StateScoped(Screen::VoxelWorld),
         RigidBody::Dynamic,
         Collider::cuboid(0.5, 0.5, 0.5),
-        block,
+        block_type,
         PbrBundle {
-            mesh: voxels.mesh(&block),
-            material: voxels.texture(&block),
+            mesh: block.mesh(),
+            material: block.material(),
             transform: Transform::from_translation(offset).with_scale(Vec3::ONE * 0.5),
             ..Default::default()
         },
@@ -78,9 +86,12 @@ pub fn update_icon(
         (With<Item>, Changed<BlockType>),
     >,
     voxels: Res<Blocks>,
+    data: Res<Assets<Block>>,
 ) {
     for (mut mesh, mut material, block) in &mut items {
-        *mesh = voxels.mesh(block);
-        *material = voxels.texture(block);
+        let block = voxels.get(*block);
+        let block = data.get(block.id()).expect("All Blocks Loaded");
+        *mesh = block.mesh();
+        *material = block.material();
     }
 }

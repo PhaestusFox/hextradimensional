@@ -9,8 +9,7 @@ use crate::{
     screen::{
         voxel_world::{
             item::{spawn_item, Item},
-            voxel_util::Blocks,
-            BlockType,
+            voxels::{Block, BlockType, Blocks},
         },
         NextTarget, Score, Screen, Target,
     },
@@ -40,6 +39,7 @@ fn drill_logic(
     extractors: Query<&VoxelId, With<Extractor>>,
     mut commands: Commands,
     voxels: Res<Blocks>,
+    data: Res<Assets<Block>>,
     chunks: Res<Assets<VoxelChunk>>,
 ) {
     let Some(chunk) = chunks.get(selected.chunk.id()) else {
@@ -47,11 +47,14 @@ fn drill_logic(
     };
     for extractor in &extractors {
         let below = chunk.get(extractor.0 - IVec3::Y);
-        if !below.can_mine() {
+        let block = voxels.get(below);
+        let block = data.get(block.id()).expect("all blocks loaded");
+        if !block.can_mine() {
             return;
         }
         spawn_item(
             below,
+            &data,
             &voxels,
             (extractor.0 + IVec3::Y).as_vec3(),
             &mut commands,
@@ -64,6 +67,8 @@ fn melter_logic(
     melters: Query<&Transform, With<Melter>>,
     mut items: Query<&mut BlockType, With<Item>>,
     mut commands: Commands,
+    data: Res<Assets<Block>>,
+    voxels: Res<Blocks>,
 ) {
     for pos in &melters {
         let Some((up, _)) = context.cast_shape(
@@ -101,10 +106,14 @@ fn melter_logic(
         let Ok([mut up, fule]) = items.get_many_mut([up, down]) else {
             continue;
         };
-        if !fule.fuel() {
+        let fule = voxels.get(*fule);
+        let fule = data.get(fule.id()).expect("All Blocks loaded");
+        if !fule.is_fuel() {
             continue;
         };
-        if let Some(melt) = up.melt() {
+        let melt = voxels.get(*up.as_ref());
+        let melt = data.get(melt.id()).expect("All Blocks loaded");
+        if let Some(melt) = melt.melt() {
             *up = melt;
             commands.entity(down).despawn();
         }

@@ -17,10 +17,11 @@ use crate::{
     screen::{
         hex_map::{
             bundle::HexCellBundle,
-            cells::{self, CellIcons, HexagonType},
+            cells::{self, CellIcons},
             cursor,
         },
         hex_vox_util::{HexId, MapDirection, HEX_SIZE},
+        voxel_world::voxel_util::WorldType,
         Screen,
     },
 };
@@ -50,12 +51,10 @@ pub fn spawn_hex_grid(
 
     commands.entity(container_entity).with_children(|parent| {
         for hex_coord in cells::SpiralIter::new(10) {
-            let hex_type = if rng.gen_bool(0.1) {
-                HexagonType::iter()
-                    .choose(&mut rng)
-                    .expect("Iter not Empty")
+            let hex_type = if rng.gen_bool(0.3) {
+                WorldType::iter().choose(&mut rng).expect("Iter not Empty")
             } else {
-                crate::screen::hex_map::cells::HexagonType::Empty
+                WorldType::Empty
             };
 
             // Get the base position from HexId
@@ -81,13 +80,13 @@ pub fn spawn_hex_grid(
 pub fn go_to_voxel(
     input: Res<ButtonInput<KeyCode>>,
     cursor: Query<(&HexId, &MapDirection), With<cursor::Cursor>>,
-    hexes: Query<(&HexId, &HexagonType)>,
+    hexes: Query<(&HexId, &WorldType)>,
     mut hex_select: ResMut<HexSelect>,
     mut next_screen: ResMut<NextState<Screen>>,
 ) {
     if input.just_pressed(KeyCode::Enter) {
         let cursor = cursor.single();
-        let mut hex_type = HexagonType::Empty;
+        let mut hex_type = WorldType::Empty;
         for (id, hex) in &hexes {
             if id == cursor.0 {
                 hex_type = *hex;

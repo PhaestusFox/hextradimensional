@@ -17,7 +17,7 @@ use bevy_rapier3d::prelude::{
     RigidBody,
 };
 
-use super::{BlockType, ComplexBlock};
+use super::voxels::BlockType;
 
 pub struct VoxelCamera;
 

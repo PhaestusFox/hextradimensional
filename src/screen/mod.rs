@@ -10,14 +10,14 @@ mod title;
 pub mod voxel_world;
 
 use bevy::prelude::*;
-use voxel_world::BlockType;
+use voxel_world::voxels::BlockType;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_state::<Screen>();
     app.enable_state_scoped_entities::<Screen>();
 
     app.init_resource::<Score>();
-    app.insert_resource(Target(BlockType::Basic(voxel_world::BasicBlock::Stone)));
+    app.insert_resource(Target(BlockType::Stone));
     app.init_resource::<NextTarget>();
 
     app.add_plugins((
@@ -41,11 +41,12 @@ pub struct NextTarget(i32);
 
 impl NextTarget {
     pub fn next(&mut self) -> BlockType {
+        use voxel_world::voxels::BlockType;
         let out = match self.0 {
-            0 => BlockType::Basic(voxel_world::BasicBlock::Coal),
-            1 => BlockType::Basic(voxel_world::BasicBlock::IronOre),
-            2 => BlockType::Complex(voxel_world::ComplexBlock::Furnace),
-            3 => BlockType::Basic(voxel_world::BasicBlock::IronBlock),
+            0 => BlockType::Coal,
+            1 => BlockType::IronOre,
+            2 => BlockType::Furnace,
+            3 => BlockType::IronBlock,
             _ => todo!(),
         };
         self.0 += 1;

@@ -1,6 +1,6 @@
 use bevy::{prelude::Component, reflect::Reflect};
 
-use crate::voxel_world::BlockType;
+use crate::voxel_world::voxels::BlockType;
 
 /// Define a struct for inventory slots
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future

@@ -80,6 +80,14 @@ enum BlockLogic {
 }
 
 impl Block {
+    pub fn can_mine(&self) -> bool {
+        !self.flags.contains(&BlockFlags::NoMine)
+    }
+
+    pub fn get_type(&self) -> BlockType {
+        self.id
+    }
+
     pub fn is_solid(&self) -> bool {
         self.solid
     }
@@ -122,7 +130,17 @@ impl Block {
 }
 
 #[derive(
-    Serialize, Deserialize, Reflect, Clone, Copy, PartialEq, Eq, Hash, strum_macros::EnumIter,
+    Serialize,
+    Deserialize,
+    Reflect,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    strum_macros::EnumIter,
+    Debug,
+    Component,
 )]
 pub enum BlockType {
     Air,
@@ -134,6 +152,8 @@ pub enum BlockType {
     Score,
     Furnace,
     Drill,
+    Sand,
+    Glass,
 }
 
 impl BlockType {
@@ -148,12 +168,15 @@ impl BlockType {
             BlockType::Score => "blocks/score.block",
             BlockType::Furnace => "blocks/furnace.block",
             BlockType::Drill => "blocks/drill.block",
+            BlockType::Sand => "blocks/sand.block",
+            BlockType::Glass => "blocks/glass.block",
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Reflect, PartialEq, Eq)]
 enum BlockFlags {
+    NoMine,
     CanMelt(BlockType),
     Fuel,
 }

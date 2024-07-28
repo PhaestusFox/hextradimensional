@@ -7,6 +7,7 @@ use bevy::{
 use super::{interaction::InteractionPalette, palette::*};
 use crate::screen::inventory::{Inventory, InventorySlot};
 use crate::screen::voxel_world::ui::FullInventoryUI;
+use crate::screen::voxel_world::voxels::{Block, Blocks};
 
 // Define the UiRoot component
 #[derive(Component)]
@@ -23,17 +24,30 @@ pub trait Widgets {
     /// Spawn a simple text label.
     fn label(&mut self, text: impl Into<String>) -> EntityCommands;
     /// Spawn an inventory slot UI element
-    fn inventory_slot(&mut self, slot: &InventorySlot, server: &Res<AssetServer>)
-        -> EntityCommands;
+    fn inventory_slot(
+        &mut self,
+        slot: &InventorySlot,
+        voxel_data: &Assets<Block>,
+        voxels: &Blocks,
+        materials: &Assets<StandardMaterial>,
+    ) -> EntityCommands;
 
     /// Spawn a hotbar inventory UI
-    fn hotbar(&mut self, inventory: &Inventory, server: &Res<AssetServer>) -> EntityCommands;
+    fn hotbar(
+        &mut self,
+        inventory: &Inventory,
+        voxels: &Blocks,
+        voxel_data: &Assets<Block>,
+        materials: &Assets<StandardMaterial>,
+    ) -> EntityCommands;
 
     /// Spawn a complete inventory UI
     fn full_inventory(
         &mut self,
         inventory: &Inventory,
-        server: &Res<AssetServer>,
+        voxels: &Blocks,
+        voxel_data: &Assets<Block>,
+        materials: &Assets<StandardMaterial>,
     ) -> EntityCommands;
 }
 
@@ -138,10 +152,23 @@ impl<T: Spawn> Widgets for T {
     fn inventory_slot(
         &mut self,
         slot: &InventorySlot,
-        server: &Res<AssetServer>,
+        blocks: &Assets<Block>,
+        voxels: &Blocks,
+        materials: &Assets<StandardMaterial>,
     ) -> EntityCommands {
         let image_handle: Handle<Image> = match &slot.resource_type {
-            Some(block_type) => server.load(block_type.texture_path()),
+            Some(block_type) => {
+                let block = voxels.get(*block_type);
+                let block = blocks.get(block.id()).expect("All blocks loaded");
+                let material = materials
+                    .get(block.material().id())
+                    .expect("block material to exist");
+                if let Some(texture) = &material.base_color_texture {
+                    texture.clone()
+                } else {
+                    TRANSPARENT_IMAGE_HANDLE
+                }
+            }
             None => TRANSPARENT_IMAGE_HANDLE,
         };
         let mut entity = self.spawn((
@@ -219,7 +246,13 @@ impl<T: Spawn> Widgets for T {
     }
 
     /// This controls the styling for the inventory hotbar. The hotbar holds 10 items
-    fn hotbar(&mut self, inventory: &Inventory, server: &Res<AssetServer>) -> EntityCommands {
+    fn hotbar(
+        &mut self,
+        inventory: &Inventory,
+        voxels: &Blocks,
+        voxel_data: &Assets<Block>,
+        materials: &Assets<StandardMaterial>,
+    ) -> EntityCommands {
         let mut entity = self.spawn((
             Name::new("Hotbar"),
             NodeBundle {
@@ -262,7 +295,7 @@ impl<T: Spawn> Widgets for T {
                 ));
 
                 slot_entity.with_children(|slot_children| {
-                    slot_children.inventory_slot(slot, server);
+                    slot_children.inventory_slot(slot, voxel_data, voxels, materials);
                 });
             }
         });
@@ -273,7 +306,9 @@ impl<T: Spawn> Widgets for T {
     fn full_inventory(
         &mut self,
         inventory: &Inventory,
-        server: &Res<AssetServer>,
+        voxels: &Blocks,
+        voxel_data: &Assets<Block>,
+        materials: &Assets<StandardMaterial>,
     ) -> EntityCommands {
         let mut entity = self.spawn((
             Name::new("Full Inventory"),
@@ -299,7 +334,7 @@ impl<T: Spawn> Widgets for T {
 
         entity.with_children(|children| {
             for slot in inventory.slots.iter().take(60) {
-                children.inventory_slot(slot, server);
+                children.inventory_slot(slot, voxel_data, voxels, materials);
             }
         });
 
