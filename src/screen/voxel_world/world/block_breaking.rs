@@ -1,5 +1,5 @@
 use crate::{
-    game::{main_character::Player, HexSelect},
+    game::{audio::sfx::PlaySfx, main_character::Player, HexSelect},
     screen::{
         inventory::Inventory,
         voxel_world::{
@@ -92,6 +92,7 @@ fn break_block(
             false,
             QueryFilter::new().exclude_rigid_body(ignore.get()),
         ) {
+            commands.trigger(PlaySfx::BlockHit);
             match voxels.get_mut(hit) {
                 Ok(None) => {
                     commands.entity(hit).insert(Breaking(0.5));
@@ -155,9 +156,8 @@ fn scail_breaking_block(
 
 fn block_placing(
     mut commands: Commands,
-    voxel_blocks: Res<Blocks>,
-    mut inventory: Query<(&mut Inventory), With<Player>>,
-    transform: Query<(&GlobalTransform), With<VoxelPlayer>>,
+    mut inventory: Query<&mut Inventory, With<Player>>,
+    transform: Query<&GlobalTransform, With<VoxelPlayer>>,
     input: Res<ButtonInput<MouseButton>>,
     physics: Res<RapierContext>,
     blocks: Query<&VoxelId>,
