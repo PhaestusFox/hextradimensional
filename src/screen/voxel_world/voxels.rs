@@ -128,7 +128,12 @@ pub enum BlockType {
     Air,
     Stone,
     Coal,
-    OreIron,
+    IronOre,
+    IronBlock,
+    BedRock,
+    Score,
+    Furnace,
+    Drill,
 }
 
 impl BlockType {
@@ -137,7 +142,12 @@ impl BlockType {
             BlockType::Air => "blocks/air.block",
             BlockType::Stone => "blocks/stone.block",
             BlockType::Coal => "blocks/coal.block",
-            BlockType::OreIron => "blocks/ore_iron.block",
+            BlockType::IronOre => "blocks/ore_iron.block",
+            BlockType::IronBlock => "blocks/solid_iron.block",
+            BlockType::BedRock => "blocks/bedrock.block",
+            BlockType::Score => "blocks/score.block",
+            BlockType::Furnace => "blocks/furnace.block",
+            BlockType::Drill => "blocks/drill.block",
         }
     }
 }
@@ -151,14 +161,19 @@ enum BlockFlags {
 #[test]
 fn output() {
     let block = BlockAsset {
-        id: BlockType::Stone,
-        flags: Vec::new(),
+        id: BlockType::IronBlock,
+        flags: vec![],
         mesh: None,
-        texture: "images/voxels/stone.png".to_string(),
-        color: LinearRgba::gray(0.75).into(),
+        texture: "images/voxels/refined_iron.png".to_string(),
+        color: LinearRgba::gray(0.5).into(),
         solid: true,
-        components: Vec::new(),
+        components: vec![],
     };
+
+    //Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0")
+    // }
+    // BlockType::Complex(ComplexBlock::Drill) => {
+    //     Some("images/multi_blocks/drill.glb#Mesh1/Primitive0")
 
     println!(
         "{}",
