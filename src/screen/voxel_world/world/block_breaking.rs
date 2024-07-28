@@ -1,10 +1,10 @@
 use crate::{
     game::HexSelect,
-    screen::voxel_world::{
+    screen::{voxel_world::{
         inventory::Inventory,
         voxel_util::{Blocks, VoxelPlayer},
         BlockType,
-    },
+    }, Screen},
 };
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -27,7 +27,7 @@ pub(crate) fn block_breaking_plugin(app: &mut App) {
         app.init_resource::<BlockBreakDebugSettings>();
         app.register_type::<BlockBreakDebugSettings>();
         app.add_systems(Update, draw_debug)
-            .add_systems(Update, block_placing)
+            .add_systems(Update, block_placing.run_if(in_state(Screen::VoxelWorld)))
             .add_systems(
                 Update,
                 (
