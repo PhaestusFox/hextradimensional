@@ -45,14 +45,9 @@ pub fn pickup_item(
             false,
             QueryFilter::new().exclude_rigid_body(ignore.get()),
         ) {
-            match voxels.get_mut(hit) {
-                Ok(block) => {
-                    commands.entity(hit).despawn();
-                    inventory.add_resource(*block, 1);
-                }
-                Err(_) => {
-                    error!("rays should only hit voxels");
-                }
+            if let Ok(block) = voxels.get_mut(hit) {
+                commands.entity(hit).despawn();
+                inventory.add_resource(*block, 1);
             }
         }
     }
