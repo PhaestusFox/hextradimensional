@@ -1,6 +1,8 @@
-use super::voxel_util::VoxelPlayer;
-use crate::screen::voxel_world::inventory::Inventory;
-use crate::ui::widgets::{Containers, UiRoot, Widgets};
+use crate::{
+    game::main_character::Player,
+    screen::inventory::Inventory,
+    ui::widgets::{Containers, UiRoot, Widgets},
+};
 use bevy::prelude::*; // Adjust this path as needed
 
 #[derive(Component)]
@@ -8,7 +10,7 @@ pub struct FullInventoryUI;
 
 pub fn setup_inventory_ui(
     mut commands: Commands,
-    player_query: Query<(&Inventory, &VoxelPlayer)>,
+    player_query: Query<(&Inventory, &Player)>,
     server: Res<AssetServer>,
 ) {
     if let Ok(player_inventory) = player_query.get_single() {
@@ -41,7 +43,7 @@ pub fn toggle_full_inventory(
 
 pub fn update_inventory_ui(
     mut commands: Commands,
-    player_query: Query<&Inventory, (With<VoxelPlayer>, Changed<Inventory>)>,
+    player_query: Query<&Inventory, (With<Player>, Changed<Inventory>)>,
     ui_root_query: Query<Entity, With<UiRoot>>,
     asset_server: Res<AssetServer>,
 ) {
@@ -60,7 +62,7 @@ pub fn update_inventory_ui(
 }
 
 pub fn handle_slot_selection(
-    mut inventory_query: Query<&mut Inventory, With<VoxelPlayer>>,
+    mut inventory_query: Query<&mut Inventory, With<Player>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
 ) {
     if let Ok(mut inventory) = inventory_query.get_single_mut() {

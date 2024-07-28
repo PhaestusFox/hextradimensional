@@ -1,6 +1,9 @@
 use crate::{
     game::HexSelect,
-    screen::{hex_vox_util::MapDirection, voxel_world::voxel_util::VoxelPlayer, Screen},
+    screen::{
+        hex_vox_util::MapDirection, inventory::Inventory, voxel_world::voxel_util::VoxelPlayer,
+        Screen,
+    },
 };
 
 use bevy::{
@@ -14,7 +17,7 @@ use bevy_rapier3d::prelude::{
     RigidBody,
 };
 
-use super::{inventory::Inventory, BlockType, ComplexBlock};
+use super::{BlockType, ComplexBlock};
 
 pub struct VoxelCamera;
 
@@ -235,39 +238,33 @@ fn pos_from_enter(direction: &MapDirection) -> Vec3 {
 }
 
 pub fn spawn_player(mut commands: Commands, hex_select: Res<HexSelect>) {
-    let mut inventory = Inventory::new(60);
-    if inventory.add_resource(BlockType::Complex(ComplexBlock::Furnace), 30) {
-        commands
-            .spawn((
-                StateScoped(Screen::VoxelWorld),
-                SpatialBundle {
-                    transform: Transform::from_translation(pos_from_enter(&hex_select.direction)),
-                    ..Default::default()
-                },
-                RigidBody::Dynamic,
-                LockedAxes::ROTATION_LOCKED,
-                Collider::capsule_y(0.5, 0.45),
-                KinematicCharacterControllerOutput::default(),
-                bevy_rapier3d::control::KinematicCharacterController {
-                    ..Default::default()
-                },
-            ))
-            // This is the child camera
-            .with_children(|p| {
-                p.spawn((
-                    Camera3dBundle {
-                        camera: Camera {
-                            order: 1,
-                            ..Default::default()
-                        },
-                        transform: Transform::from_translation(Vec3::Y * 0.5),
+    commands
+        .spawn((
+            StateScoped(Screen::VoxelWorld),
+            SpatialBundle {
+                transform: Transform::from_translation(pos_from_enter(&hex_select.direction)),
+                ..Default::default()
+            },
+            RigidBody::Dynamic,
+            LockedAxes::ROTATION_LOCKED,
+            Collider::capsule_y(0.5, 0.45),
+            KinematicCharacterControllerOutput::default(),
+            bevy_rapier3d::control::KinematicCharacterController {
+                ..Default::default()
+            },
+        ))
+        // This is the child camera
+        .with_children(|p| {
+            p.spawn((
+                Camera3dBundle {
+                    camera: Camera {
+                        order: 1,
                         ..Default::default()
                     },
-                    VoxelPlayer,
-                    inventory,
-                ));
-            });
-    } else {
-        panic!("Initial resource granting failed")
-    }
+                    transform: Transform::from_translation(Vec3::Y * 0.5),
+                    ..Default::default()
+                },
+                VoxelPlayer,
+            ));
+        });
 }

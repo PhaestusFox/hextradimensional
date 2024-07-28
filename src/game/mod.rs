@@ -6,8 +6,12 @@ use crate::screen::{
     hex_vox_util::{HexId, MapDirection},
     voxel_world::{self, world::VoxelChunk},
 };
-use bevy::{app::App, asset::Handle, prelude::Resource};
-use main_character::Seed;
+use bevy::{
+    app::{App, Startup},
+    asset::Handle,
+    prelude::Resource,
+};
+use main_character::{spawn_main_player, Seed};
 
 ///Loaded
 pub(super) fn plugin(app: &mut App) {
@@ -19,6 +23,7 @@ pub(super) fn plugin(app: &mut App) {
         chunk: Handle::default(),
     });
     app.insert_resource(Seed(0u64));
+    app.add_systems(Startup, spawn_main_player);
 }
 
 /// The current selected hexagon
