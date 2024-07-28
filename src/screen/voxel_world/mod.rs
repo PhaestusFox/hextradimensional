@@ -95,6 +95,7 @@ pub enum BlockType {
     IronBlock,
     Furnace,
     Drill,
+    BedRock,
     Voxel(VoxelData),
     MultiVoxel(Vec<DirectedVoxel>),
 }
@@ -113,6 +114,7 @@ impl BlockType {
             BlockType::IronOre => "images/voxels/ore_iron.png",
             BlockType::Furnace => "images/multi_blocks/furnace.png",
             BlockType::Drill => "images/voxels/refined_iron.png",
+            BlockType::BedRock => "images/voxels/bedrock.png",
         }
     }
 
@@ -127,6 +129,7 @@ impl BlockType {
             BlockType::IronBlock => true,
             BlockType::Furnace => true,
             BlockType::Drill => true,
+            BlockType::BedRock => true,
         }
     }
 
@@ -139,6 +142,7 @@ impl BlockType {
             BlockType::MultiVoxel(_) => None,
             BlockType::IronOre => None,
             BlockType::IronBlock => None,
+            BlockType::BedRock => None,
             BlockType::Furnace => Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0"),
             BlockType::Drill => Some("images/multi_blocks/drill.glb#Mesh1/Primitive0"),
         }
@@ -155,6 +159,7 @@ impl BlockType {
             BlockType::Voxel(_) => None,
             BlockType::MultiVoxel(_) => None,
             BlockType::Drill => None,
+            BlockType::BedRock => None,
         }
     }
 
@@ -167,6 +172,7 @@ impl BlockType {
             BlockType::IronBlock => false,
             BlockType::Furnace => false,
             BlockType::Drill => false,
+            BlockType::BedRock => false,
             BlockType::Voxel(_) => false,
             BlockType::MultiVoxel(_) => false,
         }

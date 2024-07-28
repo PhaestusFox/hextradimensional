@@ -64,6 +64,9 @@ impl WorldType {
     }
 
     pub fn sample(&self, rng: &mut impl Rng, pos: IVec3) -> BlockType {
+        if pos.y == -1 {
+            return BlockType::BedRock;
+        }
         match self {
             WorldType::Empty => BlockType::Air,
             WorldType::Stone => BlockType::Stone,
@@ -107,27 +110,26 @@ impl FromWorld for Blocks {
             textures: HashMap::default(),
         };
         let asset_server = world.resource::<AssetServer>().clone();
-        let mut materials =
-            world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
-                let mut meshes = world.resource_mut::<Assets<Mesh>>();
-                let default = meshes.add(Cuboid::from_length(1.));
-                for block in BlockType::iter() {
-                    let texture_path = block.texture_path();
-                    let mesh_path = block.mesh_path();
-                    blocks.textures.insert(
-                        block.clone(),
-                        materials.add(StandardMaterial {
-                            base_color_texture: Some(asset_server.load(texture_path)),
-                            ..Default::default()
-                        }),
-                    );
-                    if let Some(mesh) = mesh_path {
-                        blocks.meshs.insert(block, asset_server.load(mesh));
-                    } else {
-                        blocks.meshs.insert(block, default.clone());
-                    }
+        world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
+            let mut meshes = world.resource_mut::<Assets<Mesh>>();
+            let default = meshes.add(Cuboid::from_length(1.));
+            for block in BlockType::iter() {
+                let texture_path = block.texture_path();
+                let mesh_path = block.mesh_path();
+                blocks.textures.insert(
+                    block.clone(),
+                    materials.add(StandardMaterial {
+                        base_color_texture: Some(asset_server.load(texture_path)),
+                        ..Default::default()
+                    }),
+                );
+                if let Some(mesh) = mesh_path {
+                    blocks.meshs.insert(block, asset_server.load(mesh));
+                } else {
+                    blocks.meshs.insert(block, default.clone());
                 }
-            });
+            }
+        });
 
         blocks
     }

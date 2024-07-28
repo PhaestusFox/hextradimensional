@@ -103,6 +103,9 @@ impl VoxelChunk {
     }
 
     pub fn get(&self, pos: IVec3) -> BlockType {
+        if pos.y == -1 {
+            return BlockType::BedRock;
+        }
         let index =
             pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
         if index >= CHUNK_SIZE.pow(3) {
@@ -155,10 +158,10 @@ fn fill_world(chunk: &VoxelChunk, commands: &mut Commands, blocks: &Blocks) {
             StateScoped(crate::screen::Screen::VoxelWorld),
         ))
         .with_children(|commands| {
-            for x in 0..CHUNK_SIZE {
-                for y in 0..CHUNK_SIZE {
-                    for z in 0..CHUNK_SIZE {
-                        let id = IVec3::new(x as i32, y as i32, z as i32);
+            for x in 0..CHUNK_SIZE as i32 {
+                for y in -1..CHUNK_SIZE as i32 {
+                    for z in 0..CHUNK_SIZE as i32 {
+                        let id = IVec3::new(x, y, z);
                         let block = &chunk.get(id);
                         let solidity = block.is_solid();
                         let mut entity = commands.spawn((
