@@ -106,7 +106,7 @@ impl VoxelChunk {
 
     pub fn get(&self, pos: IVec3) -> BlockType {
         if pos.y == -1 {
-            return BlockType::Complex(ComplexBlock::BedRock);
+            return BlockType::Basic(BasicBlock::BedRock);
         }
         let index =
             pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
