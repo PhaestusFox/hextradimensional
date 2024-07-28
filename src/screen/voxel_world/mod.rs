@@ -14,7 +14,7 @@ use inventory::Inventory;
 use player_controller::spawn_player;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 use ui::{
     cleanup_inventory_ui, handle_slot_selection, setup_inventory_ui, toggle_full_inventory,
     update_inventory_ui,
@@ -73,12 +73,19 @@ fn return_to_hex_map(mut next_screen: ResMut<NextState<Screen>>) {
 
 const VOXEL_DIVISION_FACTOR: usize = 2;
 
-#[derive(
-    Asset, Reflect, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Component,
-)]
+#[derive(Asset, Reflect, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Component)]
 pub enum BlockType {
     Basic(BasicBlock),
     Complex(ComplexBlock),
+}
+
+impl Debug for BlockType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BlockType::Basic(block) => f.write_fmt(format_args!("{:?}", block)),
+            BlockType::Complex(block) => f.write_fmt(format_args!("{:?}", block)),
+        }
+    }
 }
 
 #[derive(Asset, Debug, Serialize, Deserialize, Clone, PartialEq, Copy, Eq, Reflect, Hash)]
