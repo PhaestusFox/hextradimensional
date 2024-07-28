@@ -20,6 +20,8 @@ use super::{
     BlockType,
 };
 
+mod voxel_logic;
+
 #[derive(Component, Clone, Copy, Debug)]
 pub struct VoxelId(pub IVec3);
 
