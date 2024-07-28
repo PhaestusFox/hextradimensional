@@ -178,11 +178,35 @@ fn fill_world_after_load(
     mut event: EventReader<AssetEvent<VoxelChunk>>,
     chunks: Res<Assets<VoxelChunk>>,
     blocks: Res<Blocks>,
+    voxels: Res<Assets<super::voxels::Block>>,
+    voxel_lookup: Res<super::voxels::Blocks>,
 ) {
     for event in event.read() {
         match event {
             AssetEvent::Added { id } => {
                 let chunk = chunks.get(id.clone()).expect("just loaded");
+                if chunk.get(IVec3::new(0, 0, 0)) == BlockType::Basic(BasicBlock::Stone) {
+                    let id = voxel_lookup.get(super::voxels::BlockType::Stone);
+                    let Some(block) = voxels.get(id.id()) else {
+                        error!("Stone not loaded");
+                        return;
+                    };
+                    let id = IVec3::new(0, 17, 0);
+                    let mut entity = commands.spawn((
+                        Name::new("Test Block"),
+                        VoxelId(id),
+                        PbrBundle {
+                            mesh: block.mesh(),
+                            material: block.material(),
+                            transform: Transform::from_translation(id.as_vec3()),
+                            ..Default::default()
+                        },
+                    ));
+                    block.add_components(&mut entity);
+                    if block.is_solid() {
+                        entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+                    }
+                }
                 fill_world(chunk, &mut commands, &blocks);
             }
             AssetEvent::Modified { id } => {}

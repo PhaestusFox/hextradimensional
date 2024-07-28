@@ -2594,10 +2594,12 @@ dependencies = [
  "bevy_rapier3d",
  "log",
  "rand",
+ "ron",
  "serde",
  "serde-big-array",
  "strum",
  "strum_macros",
+ "thiserror",
 ]
 
 [[package]]

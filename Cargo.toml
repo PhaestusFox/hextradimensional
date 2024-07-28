@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0 OR CC0-1.0"
 bevy = { version = "0.14", features = ["wayland"] }
 
 bevy_editor_pls = {git = "https://github.com/zhaop/bevy_editor_pls.git", branch = "bevy-0.14"}
+ron = "*"
 
 # Disable low-severity logs at compile time for performance.
 log = { version = "0.4", features = [
@@ -23,6 +24,7 @@ bevy_rapier3d = "*"
 serde = { version = "1.0.204", features = ["rc"] }
 bevy_pkv = "0.11.0"
 serde-big-array = "0.5.1"
+thiserror = "*"
 
 [features]
 default = [

@@ -20,7 +20,11 @@ use ui::{
 };
 use voxel_util::Blocks;
 
+mod voxels;
+
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins(voxels::VoxelPlugin);
+
     app.add_systems(
         OnEnter(Screen::VoxelWorld),
         (
