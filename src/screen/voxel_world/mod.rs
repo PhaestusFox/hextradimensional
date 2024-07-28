@@ -10,6 +10,8 @@ use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use inventory::Inventory;
 use player_controller::spawn_player;
+use serde::{Deserialize, Serialize};
+use serde_big_array::BigArray;
 use std::sync::Arc;
 use ui::{
     cleanup_inventory_ui, handle_slot_selection, setup_inventory_ui, toggle_full_inventory,
@@ -66,115 +68,115 @@ fn return_to_hex_map(mut next_screen: ResMut<NextState<Screen>>) {
     next_screen.set(Screen::HexMap);
 }
 
-const VOXEL_DIVISION_FACTOR: usize = 16;
+const VOXEL_DIVISION_FACTOR: usize = 2;
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Reflect)]
-pub struct VoxelData(Arc<[BlockType; VOXEL_DIVISION_FACTOR.pow(3)]>);
-
-impl Default for VoxelData {
-    fn default() -> Self {
-        VoxelData(Arc::new(
-            [const { BlockType::Air }; VOXEL_DIVISION_FACTOR.pow(3)],
-        ))
-    }
-}
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Reflect)]
-pub struct DirectedVoxel {
-    direction: Option<MapDirection>,
-    voxel: VoxelData,
-}
-
-/// All block types
-#[derive(Debug, Hash, PartialEq, Eq, strum_macros::EnumIter, Clone, Reflect, Component)]
+#[derive(Asset, Reflect, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BlockType {
+    Basic(BasicBlock),
+    Complex(ComplexBlock),
+}
+
+#[derive(Asset, Debug, Serialize, Deserialize, Clone, PartialEq, Copy, Eq, Reflect, Hash)]
+pub enum BasicBlock {
     Air,
     Stone,
     Coal,
     IronOre,
     IronBlock,
+}
+
+#[derive(Asset, Debug, Serialize, Deserialize, Clone, PartialEq, Copy, Eq, Reflect, Hash)]
+pub enum ComplexBlock {
     Furnace,
     Drill,
     BedRock,
-    Voxel(VoxelData),
-    MultiVoxel(Vec<DirectedVoxel>),
+    Voxel(#[serde(with = "BigArray")] [BasicBlock; VOXEL_DIVISION_FACTOR.pow(3)]),
 }
 
 // For Multi-Voxel mixing ensure that if 2 voxels can be compressed into a singular one that they are resolved as a  single voxel, not a MultiVoxel
 
 impl BlockType {
+    pub fn iter() -> std::slice::Iter<'static, Self> {
+        static BLOCKS: [BlockType; 8] = [
+            BlockType::Basic(BasicBlock::Air),
+            BlockType::Basic(BasicBlock::Stone),
+            BlockType::Basic(BasicBlock::Coal),
+            BlockType::Basic(BasicBlock::IronOre),
+            BlockType::Basic(BasicBlock::IronBlock),
+            BlockType::Complex(ComplexBlock::Furnace),
+            BlockType::Complex(ComplexBlock::Drill),
+            BlockType::Complex(ComplexBlock::Voxel(
+                [BasicBlock::Air; VOXEL_DIVISION_FACTOR.pow(3)],
+            )),
+        ];
+        BLOCKS.iter()
+    }
+
     pub const fn texture_path(&self) -> &'static str {
         match self {
-            BlockType::Air => "", // ! To fix
-            BlockType::Stone => "images/voxels/stone.png",
-            BlockType::Coal => "images/voxels/coal.png",
-            BlockType::Voxel(_) => "",
-            BlockType::MultiVoxel(_) => "",
-            BlockType::IronBlock => "images/voxels/refined_iron.png",
-            BlockType::IronOre => "images/voxels/ore_iron.png",
-            BlockType::Furnace => "images/multi_blocks/furnace.png",
-            BlockType::Drill => "images/voxels/refined_iron.png",
-            BlockType::BedRock => "images/voxels/bedrock.png",
+            BlockType::Basic(block) => block.texture_path(),
+            BlockType::Complex(block) => block.texture_path(),
         }
     }
 
     pub const fn is_solid(&self) -> bool {
         match self {
-            BlockType::Air => false,
-            BlockType::Stone => true,
-            BlockType::Coal => true,
-            BlockType::Voxel(_) => false,
-            BlockType::MultiVoxel(_) => false,
-            BlockType::IronOre => true,
-            BlockType::IronBlock => true,
-            BlockType::Furnace => true,
-            BlockType::Drill => true,
-            BlockType::BedRock => true,
+            BlockType::Basic(block) => block.is_solid(),
+            BlockType::Complex(block) => block.is_solid(),
         }
     }
 
     const fn mesh_path(&self) -> Option<&'static str> {
         match self {
-            BlockType::Air => None,
-            BlockType::Stone => None,
-            BlockType::Coal => None,
-            BlockType::Voxel(_) => None,
-            BlockType::MultiVoxel(_) => None,
-            BlockType::IronOre => None,
-            BlockType::IronBlock => None,
-            BlockType::BedRock => None,
-            BlockType::Furnace => Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0"),
-            BlockType::Drill => Some("images/multi_blocks/drill.glb#Mesh1/Primitive0"),
+            BlockType::Complex(ComplexBlock::Furnace) => {
+                Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0")
+            }
+            BlockType::Complex(ComplexBlock::Drill) => {
+                Some("images/multi_blocks/drill.glb#Mesh1/Primitive0")
+            }
+            _ => None,
         }
     }
 
     pub const fn melt(&self) -> Option<BlockType> {
         match self {
-            BlockType::Air => None,
-            BlockType::Stone => None,
-            BlockType::Coal => None,
-            BlockType::IronOre => Some(BlockType::IronBlock),
-            BlockType::IronBlock => None,
-            BlockType::Furnace => None,
-            BlockType::Voxel(_) => None,
-            BlockType::MultiVoxel(_) => None,
-            BlockType::Drill => None,
-            BlockType::BedRock => None,
+            BlockType::Basic(BasicBlock::IronOre) => Some(BlockType::Basic(BasicBlock::IronBlock)),
+            _ => None,
         }
     }
 
     pub const fn fuel(&self) -> bool {
+        matches!(self, BlockType::Basic(BasicBlock::Coal))
+    }
+}
+
+impl BasicBlock {
+    pub const fn texture_path(&self) -> &'static str {
         match self {
-            BlockType::Air => false,
-            BlockType::Stone => false,
-            BlockType::Coal => true,
-            BlockType::IronOre => false,
-            BlockType::IronBlock => false,
-            BlockType::Furnace => false,
-            BlockType::Drill => false,
-            BlockType::BedRock => false,
-            BlockType::Voxel(_) => false,
-            BlockType::MultiVoxel(_) => false,
+            BasicBlock::Air => "",
+            BasicBlock::Stone => "images/voxels/stone.png",
+            BasicBlock::Coal => "images/voxels/coal.png",
+            BasicBlock::IronOre => "images/voxels/ore_iron.png",
+            BasicBlock::IronBlock => "images/voxels/refined_iron.png",
         }
+    }
+
+    pub const fn is_solid(&self) -> bool {
+        !matches!(self, BasicBlock::Air)
+    }
+}
+
+impl ComplexBlock {
+    pub const fn texture_path(&self) -> &'static str {
+        match self {
+            ComplexBlock::Furnace => "images/multi_blocks/furnace.png",
+            ComplexBlock::Drill => "images/voxels/refined_iron.png",
+            ComplexBlock::BedRock => "images/voxels/bedrock.png",
+            ComplexBlock::Voxel(_) => "",
+        }
+    }
+
+    pub const fn is_solid(&self) -> bool {
+        true
     }
 }

@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::screen::voxel_world::{inventory::Inventory, voxel_util::VoxelPlayer, BlockType};
+use crate::screen::voxel_world::{
+    inventory::Inventory, voxel_util::VoxelPlayer, BasicBlock, BlockType, ComplexBlock,
+};
 
 pub fn give_player_block(
     mut player: Query<&mut Inventory, With<VoxelPlayer>>,
@@ -8,10 +10,10 @@ pub fn give_player_block(
 ) {
     for key in input.get_just_pressed() {
         let give = match key {
-            KeyCode::Numpad0 => BlockType::Stone,
-            KeyCode::Numpad1 => BlockType::Coal,
-            KeyCode::Numpad2 => BlockType::IronOre,
-            KeyCode::Numpad3 => BlockType::Drill,
+            KeyCode::Numpad0 => BlockType::Basic(BasicBlock::Stone),
+            KeyCode::Numpad1 => BlockType::Basic(BasicBlock::Coal),
+            KeyCode::Numpad2 => BlockType::Basic(BasicBlock::IronOre),
+            KeyCode::Numpad3 => BlockType::Complex(ComplexBlock::Drill),
             _ => continue,
         };
         for mut inventory in &mut player {

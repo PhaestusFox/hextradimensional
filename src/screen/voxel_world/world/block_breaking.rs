@@ -1,10 +1,13 @@
 use crate::{
     game::HexSelect,
-    screen::{voxel_world::{
-        inventory::Inventory,
-        voxel_util::{Blocks, VoxelPlayer},
-        BlockType,
-    }, Screen},
+    screen::{
+        voxel_world::{
+            inventory::Inventory,
+            voxel_util::{Blocks, VoxelPlayer},
+            BasicBlock, BlockType,
+        },
+        Screen,
+    },
 };
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -117,8 +120,8 @@ fn pickup_block(
                 let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
                     continue;
                 };
-                let out = chunk.set(id.0, BlockType::Air);
-                if out == BlockType::Air {
+                let out = chunk.set(id.0, BlockType::Basic(BasicBlock::Air));
+                if out == BlockType::Basic(BasicBlock::Air) {
                     warn!("Removed Air");
                     continue;
                 };

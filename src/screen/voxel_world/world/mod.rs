@@ -17,7 +17,7 @@ use rand::SeedableRng;
 
 use super::{
     voxel_util::{Blocks, WorldType},
-    BlockType,
+    BasicBlock, BlockType, ComplexBlock,
 };
 
 #[derive(Component, Clone, Copy, Debug)]
@@ -66,7 +66,7 @@ pub struct VoxelChunk([BlockType; CHUNK_SIZE.pow(3)]);
 
 impl VoxelChunk {
     fn new() -> VoxelChunk {
-        VoxelChunk(std::array::from_fn(|_| BlockType::Air))
+        VoxelChunk(std::array::from_fn(|_| BlockType::Basic(BasicBlock::Air)))
     }
 
     fn from_hex(hex: &WorldType, rng: &mut impl rand::Rng) -> VoxelChunk {
@@ -93,7 +93,7 @@ impl VoxelChunk {
             || pos.z >= CHUNK_SIZE as i32
             || pos.z < 0
         {
-            return BlockType::Air;
+            return BlockType::Basic(BasicBlock::Air);
         }
         let index =
             pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
@@ -104,12 +104,12 @@ impl VoxelChunk {
 
     pub fn get(&self, pos: IVec3) -> BlockType {
         if pos.y == -1 {
-            return BlockType::BedRock;
+            return BlockType::Complex(ComplexBlock::BedRock);
         }
         let index =
             pos.x as usize + pos.z as usize * CHUNK_SIZE + pos.y as usize * CHUNK_SIZE.pow(2);
         if index >= CHUNK_SIZE.pow(3) {
-            return BlockType::Air;
+            return BlockType::Basic(BasicBlock::Air);
         }
         self.0[index].clone()
     }

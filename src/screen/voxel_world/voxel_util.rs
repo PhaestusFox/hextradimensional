@@ -5,7 +5,7 @@ use rand::{Rng, SeedableRng};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
-use super::BlockType;
+use super::{BasicBlock, BlockType, ComplexBlock};
 
 pub struct VoxelPlugin;
 
@@ -65,23 +65,23 @@ impl WorldType {
 
     pub fn sample(&self, rng: &mut impl Rng, pos: IVec3) -> BlockType {
         if pos.y == -1 {
-            return BlockType::BedRock;
+            return BlockType::Complex(ComplexBlock::BedRock);
         }
         match self {
-            WorldType::Empty => BlockType::Air,
-            WorldType::Stone => BlockType::Stone,
+            WorldType::Empty => BlockType::Basic(BasicBlock::Air),
+            WorldType::Stone => BlockType::Basic(BasicBlock::Stone),
             WorldType::Coal => {
                 if rng.gen_bool(0.25) {
-                    BlockType::Coal
+                    BlockType::Basic(BasicBlock::Coal)
                 } else {
-                    BlockType::Stone
+                    BlockType::Basic(BasicBlock::Stone)
                 }
             }
             WorldType::Iron => {
                 if rng.gen_bool(0.25) {
-                    BlockType::IronOre
+                    BlockType::Basic(BasicBlock::IronOre)
                 } else {
-                    BlockType::Stone
+                    BlockType::Basic(BasicBlock::Stone)
                 }
             }
         }
@@ -110,26 +110,27 @@ impl FromWorld for Blocks {
             textures: HashMap::default(),
         };
         let asset_server = world.resource::<AssetServer>().clone();
-        world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
-            let mut meshes = world.resource_mut::<Assets<Mesh>>();
-            let default = meshes.add(Cuboid::from_length(1.));
-            for block in BlockType::iter() {
-                let texture_path = block.texture_path();
-                let mesh_path = block.mesh_path();
-                blocks.textures.insert(
-                    block.clone(),
-                    materials.add(StandardMaterial {
-                        base_color_texture: Some(asset_server.load(texture_path)),
-                        ..Default::default()
-                    }),
-                );
-                if let Some(mesh) = mesh_path {
-                    blocks.meshs.insert(block, asset_server.load(mesh));
-                } else {
-                    blocks.meshs.insert(block, default.clone());
+        let mut materials =
+            world.resource_scope::<Assets<StandardMaterial>, ()>(|world, mut materials| {
+                let mut meshes = world.resource_mut::<Assets<Mesh>>();
+                let default = meshes.add(Cuboid::from_length(1.));
+                for block in BlockType::iter() {
+                    let texture_path = block.texture_path();
+                    let mesh_path = block.mesh_path();
+                    blocks.textures.insert(
+                        block.clone(),
+                        materials.add(StandardMaterial {
+                            base_color_texture: Some(asset_server.load(texture_path)),
+                            ..Default::default()
+                        }),
+                    );
+                    if let Some(mesh) = mesh_path {
+                        blocks.meshs.insert(*block, asset_server.load(mesh));
+                    } else {
+                        blocks.meshs.insert(*block, default.clone());
+                    }
                 }
-            }
-        });
+            });
 
         blocks
     }
