@@ -192,6 +192,7 @@ fn block_placing(
             continue;
         };
         let mut entity = commands.spawn((
+            StateScoped(Screen::VoxelWorld),
             Name::new("Voxel Block Placed"),
             id,
             PbrBundle {

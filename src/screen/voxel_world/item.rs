@@ -7,6 +7,14 @@ use super::{
 };
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+pub struct ItemPlugin;
+
+impl Plugin for ItemPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(FixedUpdate, kill_layer)
+            .add_systems(Update, pickup_item);
+    }
+}
 
 #[derive(Component)]
 pub struct Item;
@@ -49,6 +57,14 @@ pub fn pickup_item(
                 commands.entity(hit).despawn();
                 inventory.add_resource(*block, 1);
             }
+        }
+    }
+}
+
+pub fn kill_layer(items: Query<(Entity, &Transform), With<Item>>, mut commands: Commands) {
+    for (entity, item) in &items {
+        if item.translation.y < -10. {
+            commands.entity(entity).despawn();
         }
     }
 }

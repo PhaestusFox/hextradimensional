@@ -54,7 +54,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<Blocks>();
     app.add_plugins(player_controller::VoxelCamera);
     app.register_type::<Inventory>();
-    app.add_systems(Update, item::pickup_item);
+    app.add_plugins(item::ItemPlugin);
     world::voxel_world(app);
 }
 
