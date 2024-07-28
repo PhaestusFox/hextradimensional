@@ -61,7 +61,7 @@ fn move_cursor(
             .xyz()
             .distance_squared(player.translation);
         for neighbor in MapDirection::iter() {
-            let next = ((id + neighbor).xyz() / 2.).distance_squared(player.translation);
+            let next = ((id + neighbor).xyz()).distance_squared(player.translation);
             if next < distance {
                 distance = next;
                 direction = neighbor;
