@@ -109,6 +109,44 @@ impl FromWorld for MultiBlocks {
                 output_clear: vec![ClearType::All],
             },
         );
+        map.insert(
+            MultiBlockType::Score,
+            MultiBlockRecipe {
+                size: IVec3::splat(3),
+                rules: vec![
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::CopperBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                ],
+                output_block: MultiOutput::Specific(BlockType::Score),
+                output_offset: IVec3 { x: 1, y: 1, z: 1 },
+                output_clear: vec![ClearType::All],
+            },
+        );
         MultiBlocks { recipes: map }
     }
 }
@@ -150,6 +188,7 @@ enum MultiBlockType {
     Furnace,
     Smelt,
     Drill,
+    Score,
 }
 
 struct MultiBlockRecipe {
