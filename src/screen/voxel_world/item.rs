@@ -28,7 +28,7 @@ pub fn spawn_item(
     offset: Vec3,
     commands: &mut Commands,
 ) {
-    let block = voxels.get(block_type);
+    let block = voxels.get(block_type.clone());
     let block = blocks.get(block.id()).expect("All Blocks loaded");
     commands.spawn((
         Item,
@@ -66,7 +66,7 @@ pub fn pickup_item(
         ) {
             if let Ok(block) = voxels.get_mut(hit) {
                 commands.entity(hit).despawn();
-                player_inventory.single_mut().add_resource(*block, 1);
+                player_inventory.single_mut().add_resource(block.clone(), 1);
             }
         }
     }
@@ -89,7 +89,7 @@ pub fn update_icon(
     data: Res<Assets<Block>>,
 ) {
     for (mut mesh, mut material, block) in &mut items {
-        let block = voxels.get(*block);
+        let block = voxels.get(block.clone());
         let block = data.get(block.id()).expect("All Blocks Loaded");
         *mesh = block.mesh();
         *material = block.material();

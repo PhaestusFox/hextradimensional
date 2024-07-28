@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use std::{array, hash::Hash, sync::Arc};
 
 use bevy::{
     asset::{AssetLoader, AssetPath, AsyncReadExt},
@@ -8,6 +8,7 @@ use bevy::{
     utils::HashMap,
 };
 use serde::{Deserialize, Serialize};
+use serde_big_array::{Array, BigArray};
 use strum::IntoEnumIterator;
 
 use crate::screen::hex_vox_util::MapDirection;
@@ -42,7 +43,7 @@ impl FromWorld for Blocks {
         let mut map = HashMap::new();
         let asset_server = world.resource::<AssetServer>();
         for block in BlockType::iter() {
-            map.insert(block, asset_server.load(block.path()));
+            map.insert(block.clone(), asset_server.load(block.path()));
         }
         Blocks { type_to_asset: map }
     }
@@ -94,7 +95,7 @@ impl Block {
     }
 
     pub fn get_type(&self) -> BlockType {
-        self.id
+        self.id.clone()
     }
 
     pub fn is_solid(&self) -> bool {
@@ -108,7 +109,7 @@ impl Block {
     pub fn melt(&self) -> Option<BlockType> {
         for flag in self.flags.iter() {
             if let BlockFlags::CanMelt(into) = flag {
-                return Some(*into);
+                return Some(into.clone());
             };
         }
         None
@@ -139,16 +140,18 @@ impl Block {
     }
 }
 
+const VOXEL_DIVISION_FACTOR: usize = 16usize.pow(3);
+
 #[derive(
     Serialize,
     Deserialize,
     Reflect,
     Clone,
-    Copy,
     strum_macros::EnumIter,
     strum_macros::EnumDiscriminants,
     Debug,
     Component,
+    Eq,
 )]
 #[strum_discriminants(derive(Hash))]
 pub enum BlockType {
@@ -171,9 +174,23 @@ pub enum BlockType {
     Potassium,
     Magnesium,
     Piston(MapDirection),
+    Voxel(VoxelBlock),
 }
 
-impl Eq for BlockType {}
+impl Default for BlockType {
+    fn default() -> Self {
+        BlockType::Air
+    }
+}
+
+#[derive(Serialize, Deserialize, Reflect, Clone, Debug, Component, PartialEq, Eq)]
+pub struct VoxelBlock(#[reflect(ignore)] Arc<Array<BlockType, VOXEL_DIVISION_FACTOR>>);
+
+impl Default for VoxelBlock {
+    fn default() -> Self {
+        Self(Arc::new(Array(array::from_fn(|_| BlockType::default()))))
+    }
+}
 
 #[test]
 fn hash_test() {
@@ -236,6 +253,7 @@ impl BlockType {
             BlockType::Potassium => "blocks/potassium.block",
             BlockType::Magnesium => "blocks/magnesium.block",
             BlockType::Piston(_) => "blocks/piston.block",
+            BlockType::Voxel(_) => todo!(),
         }
     }
 }

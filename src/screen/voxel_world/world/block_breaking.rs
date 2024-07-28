@@ -197,7 +197,7 @@ fn block_placing(
     let up = normal_to_direction(normal.normal);
     block_type.set_direction(up);
     println!("Up: {:?} = {}", up, up.to_rotation());
-    let block = voxels.get(block_type);
+    let block = voxels.get(block_type.clone());
     let block = voxel_data.get(block.id()).expect("All blocks loaded");
     let mut entity = commands.spawn((
         Name::new("Test Block"),
@@ -214,7 +214,7 @@ fn block_placing(
     if block.is_solid() {
         entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
     }
-    chunk.set(id.0, block_type);
+    chunk.set(id.0, block_type.clone());
     inventory
         .single_mut()
         .check_and_deduct_resources(&[(block_type, 1)]);

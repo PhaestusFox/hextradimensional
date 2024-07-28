@@ -349,7 +349,7 @@ pub fn check_for_multi_blocks(
                     let out = recipe.output(IVec3::new(x, y, z), chunk, &voxel_data, &voxels);
                     recipe.clear(IVec3::new(x, y, z), chunk, &mut commands, &blocks);
                     for (pos, block) in out {
-                        let data = voxels.get(block);
+                        let data = voxels.get(block.clone());
                         let data = voxel_data.get(data.id()).expect("all block loaded");
                         let mut entity = commands.spawn((
                             Name::new("Multi Block"),

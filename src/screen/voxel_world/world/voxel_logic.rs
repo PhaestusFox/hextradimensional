@@ -49,7 +49,7 @@ fn drill_logic(
     };
     for (extractor, pos) in &extractors {
         let below = chunk.get(extractor.0 + pos.down().as_ivec3());
-        let block = voxels.get(below);
+        let block = voxels.get(below.clone());
         let block = data.get(block.id()).expect("all blocks loaded");
         if !block.can_mine() {
             return;
@@ -108,12 +108,12 @@ fn melter_logic(
         let Ok([mut up, fule]) = items.get_many_mut([up, down]) else {
             continue;
         };
-        let fule = voxels.get(*fule);
+        let fule = voxels.get(fule.clone());
         let fule = data.get(fule.id()).expect("All Blocks loaded");
         if !fule.is_fuel() {
             continue;
         };
-        let melt = voxels.get(*up.as_ref());
+        let melt = voxels.get(up.clone());
         let melt = data.get(melt.id()).expect("All Blocks loaded");
         if let Some(melt) = melt.melt() {
             *up = melt;
