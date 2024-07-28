@@ -14,6 +14,7 @@ pub fn give_player_block(
             KeyCode::Numpad1 => BlockType::Basic(BasicBlock::Coal),
             KeyCode::Numpad2 => BlockType::Basic(BasicBlock::IronOre),
             KeyCode::Numpad3 => BlockType::Complex(ComplexBlock::Drill),
+            KeyCode::Numpad4 => BlockType::Basic(BasicBlock::Score),
             _ => continue,
         };
         for mut inventory in &mut player {

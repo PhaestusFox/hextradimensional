@@ -12,7 +12,7 @@ pub struct ItemPlugin;
 impl Plugin for ItemPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(FixedUpdate, kill_layer)
-            .add_systems(Update, pickup_item);
+            .add_systems(Update, (pickup_item, update_icon));
     }
 }
 
@@ -66,5 +66,18 @@ pub fn kill_layer(items: Query<(Entity, &Transform), With<Item>>, mut commands: 
         if item.translation.y < -10. {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+pub fn update_icon(
+    mut items: Query<
+        (&mut Handle<Mesh>, &mut Handle<StandardMaterial>, &BlockType),
+        (With<Item>, Changed<BlockType>),
+    >,
+    voxels: Res<Blocks>,
+) {
+    for (mut mesh, mut material, block) in &mut items {
+        *mesh = voxels.mesh(block);
+        *material = voxels.texture(block);
     }
 }

@@ -96,6 +96,7 @@ pub enum BasicBlock {
     IronOre,
     IronBlock,
     BedRock,
+    Score,
 }
 
 #[derive(Asset, Debug, Serialize, Deserialize, Clone, PartialEq, Copy, Eq, Reflect, Hash)]
@@ -109,7 +110,7 @@ pub enum ComplexBlock {
 
 impl BlockType {
     pub fn iter() -> std::slice::Iter<'static, Self> {
-        static BLOCKS: [BlockType; 9] = [
+        static BLOCKS: [BlockType; 10] = [
             BlockType::Basic(BasicBlock::Air),
             BlockType::Basic(BasicBlock::Stone),
             BlockType::Basic(BasicBlock::Coal),
@@ -121,6 +122,7 @@ impl BlockType {
             BlockType::Complex(ComplexBlock::Voxel(
                 [BasicBlock::Air; VOXEL_DIVISION_FACTOR.pow(3)],
             )),
+            BlockType::Basic(BasicBlock::Score),
         ];
         BLOCKS.iter()
     }
@@ -192,6 +194,7 @@ impl BasicBlock {
             BasicBlock::IronOre => "images/voxels/ore_iron.png",
             BasicBlock::IronBlock => "images/voxels/refined_iron.png",
             BasicBlock::BedRock => "images/voxels/bedrock.png",
+            BasicBlock::Score => "images/voxels/star.png",
         }
     }
 
@@ -200,8 +203,8 @@ impl BasicBlock {
     }
 
     pub fn add_components(&self, commands: &mut EntityCommands) {
-        match self {
-            _ => {}
+        if self == &BasicBlock::Score {
+            commands.insert(world::voxel_logic::ScoreGive);
         }
     }
 }
@@ -223,6 +226,9 @@ impl ComplexBlock {
         match self {
             ComplexBlock::Drill => {
                 commands.insert(world::voxel_logic::Extractor);
+            }
+            ComplexBlock::Furnace => {
+                commands.insert(world::voxel_logic::Melter);
             }
             _ => {}
         }

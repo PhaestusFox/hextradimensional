@@ -10,10 +10,15 @@ pub mod voxel_world;
 
 use crate::game;
 use bevy::prelude::*;
+use voxel_world::BlockType;
 
 pub(super) fn plugin(app: &mut App) {
     app.init_state::<Screen>();
     app.enable_state_scoped_entities::<Screen>();
+
+    app.init_resource::<Score>();
+    app.insert_resource(Target(BlockType::Basic(voxel_world::BasicBlock::Stone)));
+    app.init_resource::<NextTarget>();
 
     app.add_plugins((
         splash::plugin,
@@ -23,6 +28,29 @@ pub(super) fn plugin(app: &mut App) {
         hex_map::plugin,
         voxel_world::plugin,
     ));
+}
+
+#[derive(Resource, Default)]
+pub struct Score(i32);
+
+#[derive(Resource)]
+pub struct Target(BlockType);
+
+#[derive(Resource, Default)]
+pub struct NextTarget(i32);
+
+impl NextTarget {
+    pub fn next(&mut self) -> BlockType {
+        let out = match self.0 {
+            0 => BlockType::Basic(voxel_world::BasicBlock::Coal),
+            1 => BlockType::Basic(voxel_world::BasicBlock::IronOre),
+            2 => BlockType::Complex(voxel_world::ComplexBlock::Furnace),
+            3 => BlockType::Basic(voxel_world::BasicBlock::IronBlock),
+            _ => todo!(),
+        };
+        self.0 += 1;
+        out
+    }
 }
 
 /// The game's main screen states.
