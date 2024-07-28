@@ -37,7 +37,12 @@ pub fn spawn_hex_grid(
     let mut rng = rand::rngs::StdRng::seed_from_u64(seed.0);
     let container_entity = if container.is_empty() {
         commands
-            .spawn((Name::new("Hex Cell Container"), HexCellContainer))
+            .spawn((
+                Name::new("Hex Cell Container"),
+                HexCellContainer,
+                VisibilityBundle::default(),
+                GlobalTransform::default(),
+            ))
             .id()
     } else {
         container.single()

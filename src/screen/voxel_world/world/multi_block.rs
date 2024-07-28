@@ -2,7 +2,7 @@ use bevy::{prelude::*, utils::HashMap};
 
 use crate::{
     game::HexSelect,
-    screen::voxel_world::{voxel_util::Blocks, BlockType},
+    screen::voxel_world::{voxel_util::Blocks, BasicBlock, BlockType, ComplexBlock},
 };
 
 use super::{VoxelChunk, VoxelId, CHUNK_SIZE};
@@ -25,32 +25,32 @@ impl FromWorld for MultiBlocks {
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
-                    MultiBlockRule::Specific(BlockType::Stone),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::Stone)),
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
-                    MultiBlockRule::Specific(BlockType::Stone),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::Stone)),
                     MultiBlockRule::Solid,
-                    MultiBlockRule::Specific(BlockType::Stone),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::Stone)),
                     MultiBlockRule::Empty,
-                    MultiBlockRule::Specific(BlockType::Stone),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::Stone)),
                     MultiBlockRule::Solid,
-                    MultiBlockRule::Specific(BlockType::Stone),
-                    MultiBlockRule::Solid,
-                    MultiBlockRule::Solid,
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::Stone)),
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
-                    MultiBlockRule::Specific(BlockType::Stone),
+                    MultiBlockRule::Solid,
+                    MultiBlockRule::Solid,
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::Stone)),
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
                     MultiBlockRule::Solid,
                 ],
                 output_clear: vec![ClearType::All],
-                output_block: MultiOutput::Specific(BlockType::Furnace),
+                output_block: MultiOutput::Specific(BlockType::Complex(ComplexBlock::Furnace)),
                 output_offset: IVec3::new(1, 1, 1),
             },
         );
@@ -60,7 +60,7 @@ impl FromWorld for MultiBlocks {
                 size: IVec3::new(1, 3, 1),
                 rules: vec![
                     MultiBlockRule::Fuel,
-                    MultiBlockRule::Specific(BlockType::Furnace),
+                    MultiBlockRule::Specific(BlockType::Complex(ComplexBlock::Furnace)),
                     MultiBlockRule::CanMelt,
                 ],
                 output_block: MultiOutput::Melt(IVec3::new(0, 2, 0)),
@@ -80,19 +80,19 @@ impl FromWorld for MultiBlocks {
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
-                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::IronBlock)),
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
-                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::IronBlock)),
                     MultiBlockRule::Empty,
-                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::IronBlock)),
                     MultiBlockRule::Solid,
-                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::IronBlock)),
                     MultiBlockRule::Empty,
-                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::Basic(BasicBlock::IronBlock)),
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
@@ -104,7 +104,7 @@ impl FromWorld for MultiBlocks {
                     MultiBlockRule::Empty,
                     MultiBlockRule::Empty,
                 ],
-                output_block: MultiOutput::Specific(BlockType::Drill),
+                output_block: MultiOutput::Specific(BlockType::Complex(ComplexBlock::Drill)),
                 output_offset: IVec3 { x: 1, y: 1, z: 1 },
                 output_clear: vec![ClearType::All],
             },
@@ -138,7 +138,7 @@ impl MultiBlockRule {
         match self {
             MultiBlockRule::Solid => block.is_solid(),
             MultiBlockRule::Specific(cmp) => block == cmp,
-            MultiBlockRule::Empty => block == &BlockType::Air,
+            MultiBlockRule::Empty => block == &BlockType::Basic(BasicBlock::Air),
             MultiBlockRule::CanMelt => block.melt().is_some(),
             MultiBlockRule::Fuel => block.fuel(),
         }
@@ -203,7 +203,7 @@ impl ClearType {
                     for ry in 0..recipe.size.y {
                         for rz in 0..recipe.size.z {
                             let pos = pos + IVec3::new(rx, ry, rz);
-                            chunk.set(pos, BlockType::Air);
+                            chunk.set(pos, BlockType::Basic(BasicBlock::Air));
                             for (entity, id) in blocks {
                                 if id.0 == pos {
                                     commands.entity(entity).despawn_recursive();
@@ -215,7 +215,7 @@ impl ClearType {
             }
             ClearType::Offset(offset) => {
                 let pos = pos + *offset;
-                chunk.set(pos, BlockType::Air);
+                chunk.set(pos, BlockType::Basic(BasicBlock::Air));
                 for (entity, id) in blocks {
                     if id.0 == pos {
                         commands.entity(entity).despawn_recursive();
