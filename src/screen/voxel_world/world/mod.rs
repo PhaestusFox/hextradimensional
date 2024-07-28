@@ -167,22 +167,6 @@ fn fill_world(chunk: &VoxelChunk, commands: &mut Commands, blocks: &Blocks) {
                         let id = IVec3::new(x, y, z);
                         let block = chunk.get(id);
                         spawn_voxel(block, blocks, id, commands);
-                        // let mut entity = commands.spawn((
-                        //     Name::new("Voxel Block"),
-                        //     VoxelId(id),
-                        //     PbrBundle {
-                        //         mesh: blocks.mesh(block),
-                        //         material: blocks.texture(block),
-                        //         transform: Transform::from_translation(Vec3::new(
-                        //             x as f32, y as f32, z as f32,
-                        //         )),
-                        //         ..Default::default()
-                        //     },
-                        // ));
-                        // block.add_components(&mut entity);
-                        // if block.is_solid() {
-                        //     entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
-                        // }
                     }
                 }
             }
@@ -201,9 +185,7 @@ fn fill_world_after_load(
                 let chunk = chunks.get(id.clone()).expect("just loaded");
                 fill_world(chunk, &mut commands, &blocks);
             }
-            AssetEvent::Modified { id } => {
-                println!("Update changed to world");
-            }
+            AssetEvent::Modified { id } => {}
             _ => {}
         }
     }
