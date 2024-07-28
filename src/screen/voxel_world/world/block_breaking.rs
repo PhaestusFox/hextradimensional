@@ -1,6 +1,7 @@
 use crate::{
     game::{audio::sfx::PlaySfx, main_character::Player, HexSelect},
     screen::{
+        hex_vox_util::MapDirection,
         inventory::Inventory,
         voxel_world::{
             voxel_util::VoxelPlayer,
@@ -190,18 +191,22 @@ fn block_placing(
     let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
         return;
     };
-    let Some(block_type) = inventory.single().get_selected_block() else {
+    let Some(mut block_type) = inventory.single().get_selected_block() else {
         return;
     };
+    let up = normal_to_direction(normal.normal);
+    block_type.set_direction(up);
+    println!("Up: {:?} = {}", up, up.to_rotation());
     let block = voxels.get(block_type);
     let block = voxel_data.get(block.id()).expect("All blocks loaded");
     let mut entity = commands.spawn((
         Name::new("Test Block"),
         id,
+        StateScoped(Screen::VoxelWorld),
         PbrBundle {
             mesh: block.mesh(),
             material: block.material(),
-            transform: Transform::from_translation(id.0.as_vec3()),
+            transform: Transform::from_translation(id.0.as_vec3()).with_rotation(up.to_rotation()),
             ..Default::default()
         },
     ));
@@ -240,6 +245,37 @@ fn vec3_to_voxelId(vec: Vec3) -> VoxelId {
             VoxelId(IVec3::Z)
         } else {
             VoxelId(IVec3::NEG_Z)
+        }
+    } else {
+        panic!("I dont know if this works")
+    }
+}
+
+fn normal_to_direction(vec: Vec3) -> MapDirection {
+    let abs = vec.abs();
+
+    // x is biggest
+    if abs.x > abs.y && abs.x > abs.z {
+        if vec.x > 0. {
+            MapDirection::West
+        } else {
+            MapDirection::East
+        }
+    }
+    // y is biggest
+    else if abs.y > abs.x && abs.y > abs.z {
+        if vec.y > 0. {
+            MapDirection::Up
+        } else {
+            MapDirection::Down
+        }
+    }
+    // z is biggest
+    else if abs.z > abs.x && abs.z > abs.y {
+        if vec.z > 0. {
+            MapDirection::South
+        } else {
+            MapDirection::North
         }
     } else {
         panic!("I dont know if this works")

@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use bevy::{
     asset::{AssetLoader, AssetPath, AsyncReadExt},
     ecs::system::EntityCommands,
@@ -7,6 +9,8 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
+
+use crate::screen::hex_vox_util::MapDirection;
 
 pub struct VoxelPlugin;
 
@@ -77,6 +81,7 @@ enum BlockLogic {
     Extractor,
     Melter,
     ScoreGive,
+    Piston,
 }
 
 impl Block {
@@ -128,6 +133,7 @@ impl Block {
                 BlockLogic::Extractor => entity.insert(Extractor),
                 BlockLogic::Melter => entity.insert(Melter),
                 BlockLogic::ScoreGive => entity.insert(ScoreGive),
+                BlockLogic::Piston => entity.insert(Piston),
             };
         }
     }
@@ -139,13 +145,12 @@ impl Block {
     Reflect,
     Clone,
     Copy,
-    PartialEq,
-    Eq,
-    Hash,
     strum_macros::EnumIter,
+    strum_macros::EnumDiscriminants,
     Debug,
     Component,
 )]
+#[strum_discriminants(derive(Hash))]
 pub enum BlockType {
     Air,
     Stone,
@@ -165,9 +170,51 @@ pub enum BlockType {
     Sodium,
     Potassium,
     Magnesium,
+    Piston(MapDirection),
+}
+
+impl Eq for BlockType {}
+
+#[test]
+fn hash_test() {
+    use std::hash::Hasher;
+    let mut hasher_two = std::hash::DefaultHasher::new();
+    let mut hasher_one = std::hash::DefaultHasher::new();
+    BlockType::Piston(MapDirection::Up).hash(&mut hasher_one);
+    BlockType::Piston(MapDirection::Down).hash(&mut hasher_two);
+    assert!(BlockType::Piston(MapDirection::Up) == BlockType::Piston(MapDirection::Down));
+    assert_eq!(hasher_one.finish(), hasher_two.finish())
+}
+
+impl Hash for BlockType {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        BlockTypeDiscriminants::from(self).hash(state)
+    }
+}
+
+impl PartialEq for BlockType {
+    fn eq(&self, other: &Self) -> bool {
+        BlockTypeDiscriminants::from(self) == BlockTypeDiscriminants::from(other)
+    }
 }
 
 impl BlockType {
+    pub fn direction(&self) -> MapDirection {
+        match self {
+            BlockType::Piston(direction) => *direction,
+            _ => MapDirection::Up,
+        }
+    }
+
+    pub fn set_direction(&mut self, direction: MapDirection) {
+        match self {
+            BlockType::Piston(to) => {
+                *to = direction;
+            }
+            _ => {}
+        }
+    }
+
     pub fn path(&self) -> &'static str {
         match self {
             BlockType::Air => "blocks/air.block",
@@ -188,6 +235,7 @@ impl BlockType {
             BlockType::Sodium => "blocks/sodium.block",
             BlockType::Potassium => "blocks/potassium.block",
             BlockType::Magnesium => "blocks/magnesium.block",
+            BlockType::Piston(_) => "blocks/piston.block",
         }
     }
 }
@@ -199,32 +247,8 @@ enum BlockFlags {
     Fuel,
 }
 
-#[test]
-fn output() {
-    let block = BlockAsset {
-        id: BlockType::IronBlock,
-        flags: vec![],
-        mesh: None,
-        texture: "images/voxels/refined_iron.png".to_string(),
-        color: LinearRgba::gray(0.5).into(),
-        solid: true,
-        components: vec![],
-    };
-
-    //Some("images/multi_blocks/furnace.glb#Mesh0/Primitive0")
-    // }
-    // BlockType::Complex(ComplexBlock::Drill) => {
-    //     Some("images/multi_blocks/drill.glb#Mesh1/Primitive0")
-
-    println!(
-        "{}",
-        ron::ser::to_string_pretty(&block, ron::ser::PrettyConfig::default()).unwrap()
-    );
-}
-
 struct BlockLoader {
     default_mesh: Handle<Mesh>,
-    type_registry: AppTypeRegistry,
 }
 
 impl FromWorld for BlockLoader {
@@ -232,7 +256,6 @@ impl FromWorld for BlockLoader {
         let mut meshes = world.resource_mut::<Assets<Mesh>>();
         BlockLoader {
             default_mesh: meshes.add(Cuboid::from_length(1.)),
-            type_registry: world.resource::<AppTypeRegistry>().clone(),
         }
     }
 }

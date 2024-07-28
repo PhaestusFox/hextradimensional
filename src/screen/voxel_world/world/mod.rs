@@ -204,6 +204,7 @@ fn spawn_voxel(
     if block == BlockType::Air {
         return;
     };
+    let direction = block.direction();
     let data = voxels.get(block);
     let data = voxel_data.get(data.id()).expect("all blocks loaded");
     let mut entity = commands.spawn((
@@ -212,7 +213,8 @@ fn spawn_voxel(
         PbrBundle {
             mesh: data.mesh(),
             material: data.material(),
-            transform: Transform::from_translation(offset.as_vec3()),
+            transform: Transform::from_translation(offset.as_vec3())
+                .with_rotation(direction.to_rotation()),
             ..Default::default()
         },
     ));

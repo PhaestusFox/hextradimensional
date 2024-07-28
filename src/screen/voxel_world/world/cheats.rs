@@ -19,6 +19,7 @@ pub fn give_player_block(
             KeyCode::Numpad2 => BlockType::IronOre,
             KeyCode::Numpad3 => BlockType::Drill,
             KeyCode::Numpad4 => BlockType::Score,
+            KeyCode::Numpad5 => BlockType::Piston(crate::screen::hex_vox_util::MapDirection::Up),
             _ => continue,
         };
         for mut inventory in &mut player {

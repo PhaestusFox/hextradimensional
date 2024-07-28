@@ -1,4 +1,5 @@
 use std::{
+    default,
     f32::consts::PI,
     fmt::Display,
     ops::{Add, AddAssign},
@@ -6,10 +7,11 @@ use std::{
 };
 
 use bevy::{
-    math::{IVec2, Vec3},
+    math::{IVec2, Quat, Vec3},
     prelude::Component,
     reflect::Reflect,
 };
+use serde::{Deserialize, Serialize};
 
 pub const SQR_3: f32 = 1.732050807568877;
 pub const SQR_3_DIV_TWO: f32 = 0.8660254037844386;
@@ -153,14 +155,41 @@ impl AddAssign<MapDirection> for HexId {
 
 /// This represents the edges of the hexagon mapping to the voxel world.
 /// The Direction with reference to the hexagon is in clockwise order for the enum, starting from the top edge.
-#[derive(Clone, Copy, PartialEq, strum_macros::EnumIter, Debug, Component, Eq, Hash, Reflect)]
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    strum_macros::EnumIter,
+    Debug,
+    Component,
+    Eq,
+    Hash,
+    Reflect,
+    Serialize,
+    Deserialize,
+    Default,
+)]
 pub enum MapDirection {
+    #[default]
     Up,
     North,
     East,
     Down,
     South,
     West,
+}
+
+impl MapDirection {
+    pub fn to_rotation(&self) -> Quat {
+        match self {
+            MapDirection::Up => Quat::IDENTITY,
+            MapDirection::South => Quat::from_rotation_x(PI / 2.),
+            MapDirection::West => Quat::from_rotation_z(-PI / 2.),
+            MapDirection::Down => Quat::from_rotation_x(PI),
+            MapDirection::North => Quat::from_rotation_x(-PI / 2.),
+            MapDirection::East => Quat::from_rotation_z(PI / 2.),
+        }
+    }
 }
 
 const TWO_THIRDS_PI: f32 = PI * 2.0 / 3.0;

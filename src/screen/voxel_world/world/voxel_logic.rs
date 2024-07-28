@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::{
     plugin::RapierContext,
-    prelude::{Collider, QueryFilter, ShapeCastOptions},
+    prelude::{Collider, ExternalImpulse, QueryFilter, ShapeCastOptions},
 };
 
 use crate::{
@@ -9,6 +9,7 @@ use crate::{
     screen::{
         voxel_world::{
             item::{spawn_item, Item},
+            voxel_util::VoxelPlayer,
             voxels::{Block, BlockType, Blocks},
         },
         NextTarget, Score, Screen, Target,
@@ -23,7 +24,8 @@ impl Plugin for VoxelLogic {
     fn build(&self, app: &mut App) {
         app.add_systems(
             FixedUpdate,
-            (drill_logic, melter_logic, score_logic).run_if(in_state(Screen::VoxelWorld)),
+            (drill_logic, melter_logic, score_logic, piston_logic)
+                .run_if(in_state(Screen::VoxelWorld)),
         );
     }
 }
@@ -161,7 +163,51 @@ fn score_logic(
         } else {
             commands.trigger(PlaySfx::Key(SfxKey::NoProgress));
         }
-
         commands.entity(up).despawn();
+    }
+}
+
+#[derive(Component)]
+pub struct Piston;
+
+fn piston_logic(
+    pistons: Query<&Transform, With<Piston>>,
+    context: Res<RapierContext>,
+    items: Query<Entity, With<Item>>,
+    player: Query<&Parent, With<VoxelPlayer>>,
+    mut commands: Commands,
+) {
+    for pos in &pistons {
+        let Some((hit, _)) = context.cast_shape(
+            pos.translation,
+            Quat::IDENTITY,
+            pos.up().as_vec3(),
+            &Collider::cuboid(0.25, 0.25, 0.25),
+            ShapeCastOptions {
+                max_time_of_impact: 1.,
+                target_distance: 1.,
+                stop_at_penetration: false,
+                compute_impact_geometry_on_penetration: false,
+            },
+            QueryFilter::only_dynamic(),
+        ) else {
+            continue;
+        };
+
+        for player in &player {
+            if hit == player.get() {
+                commands.entity(player.get()).insert(ExternalImpulse {
+                    torque_impulse: Vec3::ZERO,
+                    impulse: pos.up() * 25.,
+                });
+            }
+        }
+
+        if let Ok(block) = items.get(hit) {
+            commands.entity(block).insert(ExternalImpulse {
+                torque_impulse: Vec3::ZERO,
+                impulse: pos.up() * 5.,
+            });
+        }
     }
 }
