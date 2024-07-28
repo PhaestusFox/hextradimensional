@@ -265,6 +265,11 @@ pub fn spawn_player(mut commands: Commands, hex_select: Res<HexSelect>) {
                     ..Default::default()
                 },
                 VoxelPlayer,
-            ));
+            ))
+            .with_children(|p| {
+                p.spawn(SpotLightBundle {
+                    ..Default::default()
+                });
+            });
         });
 }

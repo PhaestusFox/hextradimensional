@@ -39,6 +39,9 @@ pub enum WorldType {
     Coal,
     Iron,
     Sand,
+    Cobalt,
+    Copper,
+    Potassium,
 }
 
 #[derive(Resource)]
@@ -110,6 +113,42 @@ impl WorldType {
                     BlockType::Air
                 } else {
                     BlockType::Sand
+                }
+            }
+            WorldType::Cobalt => {
+                if rng.gen_bool(0.25) {
+                    BlockType::CobaltOre
+                } else {
+                    BlockType::Stone
+                }
+            }
+            WorldType::Copper => {
+                if rng.gen_bool(0.5 - (0.4 / 16.) * pos.y as f64 + 0.1) {
+                    BlockType::CopperOre
+                } else {
+                    BlockType::Stone
+                }
+            }
+            WorldType::Potassium => {
+                let one = rng.gen_range(0.0..(1.0 - (0.9 / 16.) * pos.y as f64 + 0.1));
+                let two = rng.gen_range(0.0..((0.9 / 16.) * pos.y as f64 + 0.1));
+                if one > 0.5 && one > two {
+                    BlockType::Magnesium
+                } else if two > 0.5 && two < one {
+                    BlockType::Sodium
+                } else if two < 0.5 && one > two {
+                    BlockType::Potassium
+                } else {
+                    use rand::seq::SliceRandom;
+                    [
+                        BlockType::Magnesium,
+                        BlockType::Sodium,
+                        BlockType::Potassium,
+                        BlockType::Magnesium,
+                    ]
+                    .choose(rng)
+                    .cloned()
+                    .unwrap_or(BlockType::Magnesium)
                 }
             }
         }

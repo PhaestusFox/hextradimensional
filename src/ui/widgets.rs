@@ -156,7 +156,7 @@ impl<T: Spawn> Widgets for T {
         voxels: &Blocks,
         materials: &Assets<StandardMaterial>,
     ) -> EntityCommands {
-        let image_handle: Handle<Image> = match &slot.resource_type {
+        let (image_handle, image_color) = match &slot.resource_type {
             Some(block_type) => {
                 let block = voxels.get(*block_type);
                 let block = blocks.get(block.id()).expect("All blocks loaded");
@@ -164,12 +164,12 @@ impl<T: Spawn> Widgets for T {
                     .get(block.material().id())
                     .expect("block material to exist");
                 if let Some(texture) = &material.base_color_texture {
-                    texture.clone()
+                    (texture.clone(), block.color())
                 } else {
-                    TRANSPARENT_IMAGE_HANDLE
+                    (TRANSPARENT_IMAGE_HANDLE, Color::srgb(0.8, 0.8, 0.8))
                 }
             }
-            None => TRANSPARENT_IMAGE_HANDLE,
+            None => (TRANSPARENT_IMAGE_HANDLE, Color::srgb(0.8, 0.8, 0.8)),
         };
         let mut entity = self.spawn((
             Name::new("Inventory Slot"),
@@ -180,7 +180,7 @@ impl<T: Spawn> Widgets for T {
                     margin: UiRect::all(Val::Auto),
                     ..default()
                 },
-                background_color: BackgroundColor(Color::srgb(0.8, 0.8, 0.8)),
+                background_color: BackgroundColor(image_color),
                 image: UiImage {
                     texture: image_handle,
                     ..default()

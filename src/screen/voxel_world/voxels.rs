@@ -80,6 +80,10 @@ enum BlockLogic {
 }
 
 impl Block {
+    pub fn color(&self) -> Color {
+        self.color
+    }
+
     pub fn can_mine(&self) -> bool {
         !self.flags.contains(&BlockFlags::NoMine)
     }
@@ -154,6 +158,13 @@ pub enum BlockType {
     Drill,
     Sand,
     Glass,
+    CobaltOre,
+    CobaltBlock,
+    CopperOre,
+    CopperBlock,
+    Sodium,
+    Potassium,
+    Magnesium,
 }
 
 impl BlockType {
@@ -163,13 +174,20 @@ impl BlockType {
             BlockType::Stone => "blocks/stone.block",
             BlockType::Coal => "blocks/coal.block",
             BlockType::IronOre => "blocks/ore_iron.block",
+            BlockType::CobaltOre => "blocks/ore_cobalt.block",
+            BlockType::CopperOre => "blocks/ore_copper.block",
             BlockType::IronBlock => "blocks/solid_iron.block",
+            BlockType::CobaltBlock => "blocks/solid_cobalt.block",
+            BlockType::CopperBlock => "blocks/solid_copper.block",
             BlockType::BedRock => "blocks/bedrock.block",
             BlockType::Score => "blocks/score.block",
             BlockType::Furnace => "blocks/furnace.block",
             BlockType::Drill => "blocks/drill.block",
             BlockType::Sand => "blocks/sand.block",
             BlockType::Glass => "blocks/glass.block",
+            BlockType::Sodium => "blocks/sodium.block",
+            BlockType::Potassium => "blocks/potassium.block",
+            BlockType::Magnesium => "blocks/magnesium.block",
         }
     }
 }
@@ -246,6 +264,8 @@ impl AssetLoader for BlockLoader {
                     let material = StandardMaterial {
                         base_color: block.color,
                         base_color_texture: Some(load_context.load(block.texture)),
+                        alpha_mode: AlphaMode::Mask(0.1),
+                        unlit: true,
                         ..Default::default()
                     };
                     load_context.add_labeled_asset(String::from("material"), material)
