@@ -20,7 +20,7 @@ use super::{
     BasicBlock, BlockType, ComplexBlock,
 };
 
-mod voxel_logic;
+pub mod voxel_logic;
 
 #[derive(Component, Clone, Copy, Debug)]
 pub struct VoxelId(pub IVec3);
@@ -131,6 +131,7 @@ pub(crate) fn voxel_world(app: &mut App) {
         OnEnter(Screen::VoxelWorld),
         (load_chunk, open_loaded_world).run_if(resource_changed::<HexSelect>),
     );
+    app.add_plugins(voxel_logic::VoxelLogic);
     #[cfg(feature = "dev")]
     app.add_systems(Update, cheats::give_player_block);
 }
@@ -164,23 +165,24 @@ fn fill_world(chunk: &VoxelChunk, commands: &mut Commands, blocks: &Blocks) {
                 for y in -1..CHUNK_SIZE as i32 {
                     for z in 0..CHUNK_SIZE as i32 {
                         let id = IVec3::new(x, y, z);
-                        let block = &chunk.get(id);
-                        let solidity = block.is_solid();
-                        let mut entity = commands.spawn((
-                            Name::new("Voxel Block"),
-                            VoxelId(id),
-                            PbrBundle {
-                                mesh: blocks.mesh(block),
-                                material: blocks.texture(block),
-                                transform: Transform::from_translation(Vec3::new(
-                                    x as f32, y as f32, z as f32,
-                                )),
-                                ..Default::default()
-                            },
-                        ));
-                        if solidity {
-                            entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
-                        }
+                        let block = chunk.get(id);
+                        spawn_voxel(block, blocks, id, commands);
+                        // let mut entity = commands.spawn((
+                        //     Name::new("Voxel Block"),
+                        //     VoxelId(id),
+                        //     PbrBundle {
+                        //         mesh: blocks.mesh(block),
+                        //         material: blocks.texture(block),
+                        //         transform: Transform::from_translation(Vec3::new(
+                        //             x as f32, y as f32, z as f32,
+                        //         )),
+                        //         ..Default::default()
+                        //     },
+                        // ));
+                        // block.add_components(&mut entity);
+                        // if block.is_solid() {
+                        //     entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
+                        // }
                     }
                 }
             }
@@ -204,6 +206,23 @@ fn fill_world_after_load(
             }
             _ => {}
         }
+    }
+}
+
+fn spawn_voxel(block: BlockType, voxels: &Blocks, offset: IVec3, commands: &mut ChildBuilder) {
+    let mut entity = commands.spawn((
+        Name::new("Voxel Block"),
+        VoxelId(offset),
+        PbrBundle {
+            mesh: voxels.mesh(&block),
+            material: voxels.texture(&block),
+            transform: Transform::from_translation(offset.as_vec3()),
+            ..Default::default()
+        },
+    ));
+    block.add_components(&mut entity);
+    if block.is_solid() {
+        entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
     }
 }
 

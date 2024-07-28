@@ -9,7 +9,7 @@ mod item;
 
 use super::{hex_vox_util::MapDirection, Screen};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use bevy::{ecs::system::EntityCommands, input::common_conditions::input_just_pressed, prelude::*};
 use inventory::Inventory;
 use player_controller::spawn_player;
 use serde::{Deserialize, Serialize};
@@ -54,6 +54,7 @@ pub(super) fn plugin(app: &mut App) {
     app.init_resource::<Blocks>();
     app.add_plugins(player_controller::VoxelCamera);
     app.register_type::<Inventory>();
+    app.add_systems(Update, item::pickup_item);
     world::voxel_world(app);
 }
 
@@ -72,7 +73,9 @@ fn return_to_hex_map(mut next_screen: ResMut<NextState<Screen>>) {
 
 const VOXEL_DIVISION_FACTOR: usize = 2;
 
-#[derive(Asset, Reflect, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(
+    Asset, Reflect, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Component,
+)]
 pub enum BlockType {
     Basic(BasicBlock),
     Complex(ComplexBlock),
@@ -150,6 +153,17 @@ impl BlockType {
     pub const fn fuel(&self) -> bool {
         matches!(self, BlockType::Basic(BasicBlock::Coal))
     }
+
+    pub fn add_components(&self, commands: &mut EntityCommands) {
+        match self {
+            BlockType::Basic(block) => {
+                block.add_components(commands);
+            }
+            BlockType::Complex(block) => {
+                block.add_components(commands);
+            }
+        }
+    }
 }
 
 impl BasicBlock {
@@ -166,6 +180,12 @@ impl BasicBlock {
     pub const fn is_solid(&self) -> bool {
         !matches!(self, BasicBlock::Air)
     }
+
+    pub fn add_components(&self, commands: &mut EntityCommands) {
+        match self {
+            _ => {}
+        }
+    }
 }
 
 impl ComplexBlock {
@@ -180,5 +200,14 @@ impl ComplexBlock {
 
     pub const fn is_solid(&self) -> bool {
         true
+    }
+
+    pub fn add_components(&self, commands: &mut EntityCommands) {
+        match self {
+            ComplexBlock::Drill => {
+                commands.insert(world::voxel_logic::Extractor);
+            }
+            _ => {}
+        }
     }
 }

@@ -78,19 +78,19 @@ fn break_block(
     mut commands: Commands,
     input: Res<ButtonInput<MouseButton>>,
     physics: Res<RapierContext>,
-    player: Query<&GlobalTransform, With<VoxelPlayer>>,
+    player: Query<(&Parent, &GlobalTransform), With<VoxelPlayer>>,
     mut voxels: Query<Option<&mut Breaking>, With<VoxelId>>,
 ) {
     if !input.just_pressed(MouseButton::Left) {
         return;
     }
-    for player in &player {
+    for (ignore, player) in &player {
         if let Some((hit, _)) = physics.cast_ray(
             player.translation(),
             player.forward().as_vec3(),
             6.,
             false,
-            QueryFilter::only_fixed(),
+            QueryFilter::new().exclude_rigid_body(ignore.get()),
         ) {
             match voxels.get_mut(hit) {
                 Ok(None) => {
@@ -191,7 +191,6 @@ fn block_placing(
         let Some(block) = inventory.get_selected_block() else {
             continue;
         };
-        let solidity = block.is_solid();
         let mut entity = commands.spawn((
             Name::new("Voxel Block Placed"),
             id,
@@ -202,7 +201,8 @@ fn block_placing(
                 ..Default::default()
             },
         ));
-        if solidity {
+        block.add_components(&mut entity);
+        if block.is_solid() {
             entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
         }
         chunk.set(id.0, block.clone());
