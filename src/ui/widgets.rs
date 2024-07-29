@@ -274,9 +274,16 @@ impl<T: Spawn> Widgets for T {
         ));
 
         entity.with_children(|children| {
-            for (index, slot) in inventory.slots.iter().take(10).enumerate() {
+            for (index, slot) in inventory
+                .slots
+                .iter()
+                .skip(inventory.selected_row * 10usize)
+                .take(10)
+                .enumerate()
+            {
+                let global_index = inventory.selected_row * 10 + index;
                 let mut slot_entity = children.spawn((
-                    Name::new(format!("Hotbar Slot {}", index)),
+                    Name::new(format!("Hotbar Slot {}", global_index)),
                     NodeBundle {
                         style: Style {
                             width: Percent(100.0),
@@ -285,7 +292,7 @@ impl<T: Spawn> Widgets for T {
                             align_items: AlignItems::Center,
                             ..default()
                         },
-                        background_color: if index == inventory.selected_slot {
+                        background_color: if global_index == inventory.selected_slot {
                             BackgroundColor(Color::srgb(1.0, 0.0, 0.0))
                         } else {
                             BackgroundColor(Color::NONE)

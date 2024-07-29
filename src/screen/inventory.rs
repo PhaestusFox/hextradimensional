@@ -1,7 +1,11 @@
-use bevy::{prelude::Component, reflect::Reflect};
+use bevy::{
+    input::ButtonInput,
+    prelude::{info, Component, KeyCode, Query, Res, With},
+    reflect::Reflect,
+};
 use serde::{Deserialize, Serialize};
 
-use crate::voxel_world::voxels::BlockType;
+use crate::{game::main_character::Player, voxel_world::voxels::BlockType};
 
 /// Define a struct for inventory slots
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future
@@ -17,6 +21,7 @@ pub struct InventorySlot {
 pub struct Inventory {
     pub slots: Vec<InventorySlot>,
     pub selected_slot: usize,
+    pub selected_row: usize,
 }
 
 impl Inventory {
@@ -30,25 +35,36 @@ impl Inventory {
                 size
             ],
             selected_slot: 0,
+            selected_row: 0,
         }
     }
 
     /// returns true if added and false if Inventory full
     pub fn add_resource(&mut self, resource_type: BlockType, quantity: u32) -> bool {
-        match self.slots.iter_mut().find(|slot| {
-            matches!(&slot.resource_type, Some(rt) if *rt == resource_type)
-                || slot.resource_type.is_none()
-        }) {
-            Some(slot) => {
-                slot.resource_type = Some(resource_type);
-                slot.quantity += quantity;
-                true
-            }
-            None => {
-                println!("Inventory full, couldn't add resource");
-                false
+        // First, try to find a matching slot and add to it
+        for slot in &mut self.slots {
+            if let Some(rt) = &slot.resource_type {
+                if *rt == resource_type {
+                    slot.quantity += quantity;
+                    return true;
+                }
             }
         }
+
+        // If no matching slot found, find the first empty slot
+        if let Some(empty_slot) = self
+            .slots
+            .iter_mut()
+            .find(|slot| slot.resource_type.is_none())
+        {
+            empty_slot.resource_type = Some(resource_type);
+            empty_slot.quantity = quantity;
+            return true;
+        }
+
+        // If no empty slot found, the inventory is full
+        info!("Inventory full, couldn't add resource");
+        false
     }
 
     pub fn get_total_resource(&self, resource_type: BlockType) -> u32 {
@@ -94,12 +110,37 @@ impl Inventory {
     }
 
     pub fn select_slot(&mut self, slot_index: usize) {
-        if slot_index < self.slots.len() {
-            self.selected_slot = slot_index;
+        if slot_index < 10 {
+            self.selected_slot = slot_index + (10 * self.selected_row);
         }
     }
 
     pub fn get_selected_block(&self) -> Option<BlockType> {
         self.slots[self.selected_slot].resource_type.clone()
+    }
+}
+
+pub fn change_row_inventory(
+    input: Res<ButtonInput<KeyCode>>,
+    mut player_inventory: Query<&mut Inventory, With<Player>>,
+) {
+    if input.just_pressed(KeyCode::KeyQ) {
+        if let Ok(mut inventory) = player_inventory.get_single_mut() {
+            inventory.selected_row = (inventory.selected_row + 5) % 6;
+            inventory.selected_slot = inventory.selected_row * 10;
+        }
+    }
+
+    #[cfg(not(feature = "dev"))]
+    let increment_key = KeyCode::KeyE;
+
+    #[cfg(feature = "dev")]
+    let increment_key = KeyCode::KeyZ;
+
+    if input.just_pressed(increment_key) {
+        if let Ok(mut inventory) = player_inventory.get_single_mut() {
+            inventory.selected_row = (inventory.selected_row + 1) % 6;
+            inventory.selected_slot = inventory.selected_row * 10;
+        }
     }
 }

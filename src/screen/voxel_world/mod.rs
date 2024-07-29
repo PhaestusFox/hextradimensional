@@ -7,7 +7,10 @@ pub mod world;
 
 mod item;
 
-use super::{inventory::Inventory, Screen};
+use super::{
+    inventory::{change_row_inventory, Inventory},
+    Screen,
+};
 use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack, save::inventory_save};
 use bevy::{ecs::system::EntityCommands, input::common_conditions::input_just_pressed, prelude::*};
 use player_controller::spawn_player;
@@ -54,6 +57,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(player_controller::VoxelCamera);
     app.register_type::<Inventory>();
     app.add_plugins(item::ItemPlugin);
+    app.add_systems(Update, change_row_inventory);
     world::voxel_world(app);
 }
 
