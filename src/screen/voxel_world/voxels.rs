@@ -74,7 +74,7 @@ fn default_solid() -> bool {
     true
 }
 
-#[derive(Asset, Reflect)]
+#[derive(Asset, Reflect, Debug)]
 pub struct Block {
     id: BlockType,
     flags: Vec<BlockFlags>,
@@ -287,7 +287,7 @@ impl BlockType {
     }
 }
 
-#[derive(Serialize, Deserialize, Reflect, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Reflect, PartialEq, Eq, Debug)]
 enum BlockFlags {
     NoMine,
     CanMelt(BlockType),
@@ -320,7 +320,6 @@ impl AssetLoader for BlockLoader {
         async {
             let mut str = String::default();
             reader.read_to_string(&mut str).await?;
-            println!("{}", str);
             let block = ron::from_str::<BlockAsset>(&str)?;
 
             let mesh = match &block.id {

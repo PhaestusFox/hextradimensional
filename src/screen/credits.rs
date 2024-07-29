@@ -31,13 +31,19 @@ fn enter_credits(mut commands: Commands) {
         .insert(StateScoped(Screen::Credits))
         .with_children(|children| {
             children.header("Made by");
-            children.label("Alice - Foo");
-            children.label("Bob - Bar");
+            children.label("Phaestusfox");
+            children.label("Developer, 3D Modeler,");
+            children.label("Texture Artist, Game Design");
+            children.label("Rowan");
+            children.label( "Developer, Game Design");
 
             children.header("Assets");
+            children.label("3D Assets - Phaestusfox");
+            children.label("Textures - Phaestusfox");
             children.label("Bevy logo - All rights reserved by the Bevy Foundation. Permission granted for splash screen use when unmodified.");
             children.label("Ducky sprite - CC0 by Caz Creates Games");
             children.label("Music - CC BY 3.0 by Kevin MacLeod");
+            children.label("Effects - CC0 by Kenney");
 
             children.button("Back").insert(CreditsAction::Back);
         });
