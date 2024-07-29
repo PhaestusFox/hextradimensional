@@ -10,7 +10,7 @@ use crate::{
 use bevy::{
     asset::{
         io::{AssetReader, AssetReaderError, ErasedAssetReader, Reader},
-        AssetLoader, AsyncReadExt,
+        AssetLoader,
     },
     prelude::*,
     tasks::futures_lite::{AsyncRead, AsyncSeek},
@@ -197,10 +197,10 @@ fn fill_world_after_load(
     for event in event.read() {
         match event {
             AssetEvent::Added { id } => {
-                let chunk = chunks.get(id.clone()).expect("just loaded");
+                let chunk = chunks.get(*id).expect("just loaded");
                 fill_world(chunk, &mut commands, &blocks, &voxels);
             }
-            AssetEvent::Modified { id } => {}
+            AssetEvent::Modified { id: _ } => {}
             _ => {}
         }
     }
@@ -248,7 +248,7 @@ impl VoxelStore {
 }
 
 impl FromWorld for VoxelStore {
-    fn from_world(world: &mut World) -> Self {
+    fn from_world(_world: &mut World) -> Self {
         VoxelStore(Arc::new(std::sync::RwLock::new(PkvStore::new(
             "Bevy Jam 5",
             "Hextradimensional_Chunks",
@@ -271,7 +271,7 @@ impl AssetLoader for VoxelChunkLoader {
 
     fn load<'a>(
         &'a self,
-        reader: &'a mut bevy::asset::io::Reader,
+        _reader: &'a mut bevy::asset::io::Reader,
         settings: &'a Self::Settings,
         load_context: &'a mut bevy::asset::LoadContext,
     ) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {

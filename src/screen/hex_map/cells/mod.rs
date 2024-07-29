@@ -1,12 +1,10 @@
 use bevy::{
     asset::{AssetServer, Handle},
-    math::{IVec2, Vec3},
-    prelude::{Changed, Component, FromWorld, Query, Resource},
+    prelude::{Changed, FromWorld, Query, Resource},
     render::texture::Image,
     transform::components::Transform,
     utils::HashMap,
 };
-use std::{f32::consts::PI, fmt::Display, str::FromStr};
 mod iterators;
 
 pub use iterators::*;

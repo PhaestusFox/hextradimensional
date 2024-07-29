@@ -1,9 +1,6 @@
 use crate::{
     game::HexSelect,
-    screen::{
-        hex_vox_util::MapDirection, inventory::Inventory, voxel_world::voxel_util::VoxelPlayer,
-        Screen,
-    },
+    screen::{hex_vox_util::MapDirection, voxel_world::voxel_util::VoxelPlayer, Screen},
 };
 
 use bevy::{
@@ -16,8 +13,6 @@ use bevy_rapier3d::prelude::{
     Collider, KinematicCharacterController, KinematicCharacterControllerOutput, LockedAxes,
     RigidBody,
 };
-
-use super::voxels::BlockType;
 
 pub struct VoxelCamera;
 
@@ -162,7 +157,6 @@ pub struct VoxelSettings {
     pub move_right: KeyCode,
     pub jump: KeyCode,
     pub toggle_grab_cursor: KeyCode,
-    pub move_speed: f32,
     pub mouse_sensitivity: f32,
 }
 
@@ -176,7 +170,6 @@ impl Default for VoxelSettings {
             jump: KeyCode::Space,
             toggle_grab_cursor: KeyCode::Backquote,
             mouse_sensitivity: 0.00012,
-            move_speed: 12.,
         }
     }
 }

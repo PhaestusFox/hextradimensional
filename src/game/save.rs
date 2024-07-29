@@ -4,8 +4,8 @@ use bevy::{
     app::{App, Startup},
     asset::Assets,
     log::{error, info, warn},
-    prelude::{Commands, Event, EventReader, Query, ReflectResource, Res, ResMut, Resource, With},
-    reflect::{self, Reflect},
+    prelude::{Commands, Query, ReflectResource, Res, ResMut, Resource, With},
+    reflect::Reflect,
 };
 use bevy_pkv::PkvStore;
 use serde::{Deserialize, Serialize};

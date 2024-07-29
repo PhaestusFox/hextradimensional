@@ -1,19 +1,9 @@
-use crate::screen::{hex_vox_util::HexId, voxel_world::player_controller::VoxelCamera, Screen};
-use bevy::{prelude::*, utils::HashMap};
-use bevy_rapier3d::prelude::*;
-use rand::{Rng, SeedableRng};
+use bevy::prelude::*;
+
+use rand::Rng;
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
 
 use super::voxels::BlockType;
-
-pub struct VoxelPlugin;
-
-impl Plugin for VoxelPlugin {
-    fn build(&self, app: &mut App) {
-        //app.init_resource::<BlocksOld>().add_plugins(VoxelCamera);
-    }
-}
 
 /// This describes the main player in the voxel world
 #[derive(Component)]
@@ -44,41 +34,7 @@ pub enum WorldType {
     Potassium,
 }
 
-#[derive(Resource)]
-pub struct Solid([bool; 16 * 16 * 16]);
-
-impl Default for Solid {
-    fn default() -> Self {
-        Self([false; 16 * 16 * 16])
-    }
-}
-
-impl Solid {
-    fn set(&mut self, x: i32, y: i32, z: i32, val: bool) {
-        self.0[(x + z * 16 + y * 16 * 16) as usize] = val;
-    }
-    fn clear(&mut self) {
-        self.0 = [false; 16 * 16 * 16];
-    }
-    pub fn get(&self, x: i32, y: i32, z: i32) -> bool {
-        self.0
-            .get((x + z * 16 + y * 16 * 16) as usize)
-            .cloned()
-            .unwrap_or(false)
-    }
-}
-
 impl WorldType {
-    fn from_u8(id: u8) -> WorldType {
-        match id {
-            0 => WorldType::Empty,
-            1 => WorldType::Stone,
-            2 => WorldType::Coal,
-            3 => WorldType::Iron,
-            _ => unreachable!(),
-        }
-    }
-
     pub fn sample(&self, rng: &mut impl Rng, pos: IVec3) -> BlockType {
         if pos.y == -1 {
             return BlockType::BedRock;

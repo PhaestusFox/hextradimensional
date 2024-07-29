@@ -13,7 +13,7 @@ pub struct MultiBlocks {
 }
 
 impl FromWorld for MultiBlocks {
-    fn from_world(world: &mut World) -> Self {
+    fn from_world(_world: &mut World) -> Self {
         let mut map: bevy::utils::hashbrown::HashMap<MultiBlockType, MultiBlockRecipe> =
             HashMap::new();
         map.insert(
@@ -381,7 +381,7 @@ pub fn check_for_multi_blocks(
                                 let block = chunk.get(pos);
                                 let block = voxels.get(block);
                                 let block = voxel_data.get(block.id()).expect("all BLocks loaded");
-                                if !recipe.rules[rule_index as usize].applies_to(&block) {
+                                if !recipe.rules[rule_index as usize].applies_to(block) {
                                     continue 'failed;
                                 }
                             }

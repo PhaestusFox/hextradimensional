@@ -2,16 +2,12 @@ use bevy::{
     asset::{AssetLoader, AsyncReadExt},
     ecs::system::EntityCommands,
     prelude::*,
-    render::{
-        mesh::{Indices, PrimitiveTopology},
-        render_asset::RenderAssetUsages,
-    },
     utils::HashMap,
 };
-use block_mesh::{
-    greedy_quads, ndshape::ConstShape3u32, GreedyQuadsBuffer, MergeVoxel, Voxel, VoxelVisibility,
-    RIGHT_HANDED_Y_UP_CONFIG,
-};
+// use block_mesh::{
+//     greedy_quads, ndshape::ConstShape3u32, GreedyQuadsBuffer, MergeVoxel, Voxel, VoxelVisibility,
+//     RIGHT_HANDED_Y_UP_CONFIG,
+// };
 use serde::{Deserialize, Serialize};
 use serde_big_array::Array;
 use std::{array, hash::Hash, sync::Arc};
@@ -229,7 +225,7 @@ impl BlockType {
 
     pub fn set_direction(&mut self, direction: MapDirection) {
         match self {
-            BlockType::Piston(to) => {
+            BlockType::Piston(to) | BlockType::PistonL2(to) | BlockType::Drill(to) => {
                 *to = direction;
             }
             _ => {}

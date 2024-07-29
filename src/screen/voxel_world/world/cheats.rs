@@ -1,17 +1,8 @@
-use std::{array, sync::Arc};
-
 use bevy::prelude::*;
-use serde_big_array::Array;
 
 use crate::{
     game::main_character::Player,
-    screen::{
-        inventory::Inventory,
-        voxel_world::{
-            voxel_util::VoxelPlayer,
-            voxels::{BlockType, VoxelBlock},
-        },
-    },
+    screen::{inventory::Inventory, voxel_world::voxels::BlockType},
 };
 
 pub fn give_player_block(

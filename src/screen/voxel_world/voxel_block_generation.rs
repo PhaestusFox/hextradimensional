@@ -11,7 +11,7 @@ use block_mesh::{
     greedy_quads, GreedyQuadsBuffer, MergeVoxel, Voxel, VoxelVisibility, RIGHT_HANDED_Y_UP_CONFIG,
 };
 
-use super::voxels::{BlockType, Blocks, VoxelBlock};
+use super::voxels::{BlockType, VoxelBlock};
 
 #[derive(TypePath, Asset)]
 pub struct VoxelMesh {

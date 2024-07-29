@@ -1,14 +1,5 @@
 use bevy::prelude::*;
 
-pub struct HexPlugin;
-
-const SEED: [u8; 32] = [
-    0b01000010, 0b01100101, 0b01110110, 0b01111001, 0b01001010, 0b01100001, 0b01101101, 0b00110101,
-    0b01101000, 0b01100101, 0b01111000, 0b01110100, 0b01110010, 0b01100001, 0b01100100, 0b01101001,
-    0b01101101, 0b01100101, 0b01101110, 0b01110011, 0b01101001, 0b01101111, 0b01101110, 0b01100001,
-    0b01101100, 0, 0, 0, 0, 0, 0, 0,
-];
-
 use rand::{seq::IteratorRandom, Rng, SeedableRng};
 use strum::IntoEnumIterator;
 // ! Fix test module
@@ -20,7 +11,7 @@ use crate::{
             cells::{self, CellIcons},
             cursor,
         },
-        hex_vox_util::{HexId, MapDirection, HEX_SIZE},
+        hex_vox_util::{HexId, MapDirection},
         voxel_world::voxel_util::WorldType,
         Screen,
     },
@@ -93,12 +84,11 @@ pub fn go_to_voxel(
                 break;
             }
         }
-        let a = *cursor.1;
 
         *hex_select = HexSelect {
             hex_id: *cursor.0,
             direction: *cursor.1,
-            world: hex_type.into(),
+            world: hex_type,
             chunk: Handle::default(),
         };
         // ! Fix type later

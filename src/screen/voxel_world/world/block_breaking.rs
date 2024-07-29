@@ -180,7 +180,7 @@ fn block_placing(
     ) else {
         return;
     };
-    let id = vec3_to_voxelId(normal.normal);
+    let id = vec3_to_voxel_id(normal.normal);
     let Ok(old) = blocks.get(hit) else {
         panic!("hit block is not voxel");
     };
@@ -220,7 +220,7 @@ fn block_placing(
         .check_and_deduct_resources(&[(block_type, 1)]);
 }
 
-fn vec3_to_voxelId(vec: Vec3) -> VoxelId {
+fn vec3_to_voxel_id(vec: Vec3) -> VoxelId {
     let abs = vec.abs();
 
     // x is biggest

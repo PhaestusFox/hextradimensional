@@ -13,7 +13,6 @@ pub struct FullInventoryUI;
 pub fn setup_inventory_ui(
     mut commands: Commands,
     player_query: Query<(&Inventory, &Player)>,
-    server: Res<AssetServer>,
     voxels: Res<Blocks>,
     voxel_data: Res<Assets<Block>>,
     materials: Res<Assets<StandardMaterial>>,

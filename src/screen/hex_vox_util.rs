@@ -1,5 +1,4 @@
 use std::{
-    default,
     f32::consts::PI,
     fmt::Display,
     ops::{Add, AddAssign},
@@ -13,9 +12,9 @@ use bevy::{
 };
 use serde::{Deserialize, Serialize};
 
-pub const SQR_3: f32 = 1.732050807568877;
-pub const SQR_3_DIV_TWO: f32 = 0.8660254037844386;
-pub const SQR_3_DIV_THREE: f32 = 0.5773502691896258;
+pub const SQR_3: f32 = 1.7320508;
+pub const SQR_3_DIV_TWO: f32 = 0.8660254;
+pub const SQR_3_DIV_THREE: f32 = 0.57735026;
 pub const HEX_SIZE: f32 = 100.;
 pub const HEX_SPACING: f32 = HEX_SIZE / 2.;
 
@@ -107,13 +106,11 @@ impl HexId {
             } else {
                 HexId::new((-round_s - round_r) as i32, round_r as i32)
             }
+        } else if r_dif > q_dif {
+            let r = (-round_s - round_q) as i32;
+            HexId::new(round_q as i32, r)
         } else {
-            if r_dif > q_dif {
-                let r = (-round_s - round_q) as i32;
-                HexId::new(round_q as i32, r)
-            } else {
-                HexId::new((-round_s - round_r) as i32, round_r as i32)
-            }
+            HexId::new((-round_s - round_r) as i32, round_r as i32)
         }
     }
 
@@ -180,7 +177,7 @@ pub enum MapDirection {
 }
 
 impl MapDirection {
-    pub fn to_rotation(&self) -> Quat {
+    pub fn to_rotation(self) -> Quat {
         match self {
             MapDirection::Up => Quat::IDENTITY,
             MapDirection::South => Quat::from_rotation_x(PI / 2.),

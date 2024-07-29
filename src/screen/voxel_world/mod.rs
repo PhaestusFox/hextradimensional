@@ -16,11 +16,8 @@ use crate::game::{
     audio::soundtrack::PlaySoundtrack,
     save::{inventory_save, save_chunk_data},
 };
-use bevy::{ecs::system::EntityCommands, input::common_conditions::input_just_pressed, prelude::*};
+use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use player_controller::spawn_player;
-use serde::{Deserialize, Serialize};
-use serde_big_array::BigArray;
-use std::{f32::consts::PI, fmt::Debug};
 use ui::{
     cleanup_inventory_ui, handle_slot_selection, setup_inventory_ui, toggle_full_inventory,
     update_inventory_ui,

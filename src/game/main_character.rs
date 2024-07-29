@@ -1,10 +1,7 @@
 use bevy::{
     core::Name,
     ecs::query::QueryData,
-    prelude::{
-        Commands, Component, GlobalTransform, InheritedVisibility, ReflectComponent,
-        ReflectResource, Resource,
-    },
+    prelude::{Commands, Component, GlobalTransform, InheritedVisibility, ReflectComponent},
     reflect::Reflect,
 };
 

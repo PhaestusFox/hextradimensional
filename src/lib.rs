@@ -5,10 +5,7 @@ mod screen;
 mod ui;
 
 use bevy::{
-    asset::{
-        io::{AssetSource, AssetSourceBuilder, AssetSourceId},
-        AssetMetaCheck,
-    },
+    asset::{io::AssetSource, AssetMetaCheck},
     audio::{AudioPlugin, Volume},
     prelude::*,
 };
