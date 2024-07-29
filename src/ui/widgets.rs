@@ -158,7 +158,7 @@ impl<T: Spawn> Widgets for T {
     ) -> EntityCommands {
         let (image_handle, image_color) = match &slot.resource_type {
             Some(block_type) => {
-                let block = voxels.get(*block_type);
+                let block = voxels.get(block_type.clone());
                 let block = blocks.get(block.id()).expect("All blocks loaded");
                 let material = materials
                     .get(block.material().id())

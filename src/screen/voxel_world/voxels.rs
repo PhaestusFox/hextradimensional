@@ -253,7 +253,7 @@ impl BlockType {
             BlockType::Potassium => "blocks/potassium.block",
             BlockType::Magnesium => "blocks/magnesium.block",
             BlockType::Piston(_) => "blocks/piston.block",
-            BlockType::Voxel(_) => todo!(),
+            BlockType::Voxel(_) => "blocks/voxel.block",
         }
     }
 }
