@@ -16,10 +16,6 @@ use crate::screen::inventory::Inventory;
 #[reflect(Component)]
 pub struct Player;
 
-#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
-#[reflect(Resource)]
-pub struct Seed(pub u64);
-
 pub fn spawn_main_player(mut commands: Commands) {
     commands.spawn((
         Name::new("Saved Player"),

@@ -1,6 +1,7 @@
 pub mod assets;
 pub mod audio;
 pub mod main_character;
+pub mod save;
 
 use crate::screen::{
     hex_vox_util::{HexId, MapDirection},
@@ -9,21 +10,24 @@ use crate::screen::{
 use bevy::{
     app::{App, Startup},
     asset::Handle,
-    prelude::Resource,
+    prelude::{IntoSystemConfigs, Resource},
 };
-use main_character::{spawn_main_player, Seed};
+use main_character::spawn_main_player;
+use save::inventory_load;
 
 ///Loaded
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((audio::plugin, assets::plugin));
+    app.add_plugins((audio::plugin, assets::plugin, save::plugin));
     app.insert_resource(HexSelect {
         hex_id: HexId::new(0, 0),
         direction: MapDirection::Up,
         world: voxel_world::voxel_util::WorldType::Empty,
         chunk: Handle::default(),
     });
-    app.insert_resource(Seed(0u64));
-    app.add_systems(Startup, spawn_main_player);
+    app.add_systems(
+        Startup,
+        (spawn_main_player, inventory_load.after(spawn_main_player)),
+    );
 }
 
 /// The current selected hexagon

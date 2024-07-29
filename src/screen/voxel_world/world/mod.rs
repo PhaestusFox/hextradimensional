@@ -68,7 +68,7 @@ pub struct VoxelChunk([BlockType; CHUNK_SIZE.pow(3)]);
 
 impl VoxelChunk {
     fn new() -> VoxelChunk {
-        VoxelChunk(std::array::from_fn(|_| BlockType::Air))
+        VoxelChunk(std::array::from_fn(|_| BlockType::default()))
     }
 
     fn from_hex(hex: &WorldType, rng: &mut impl rand::Rng) -> VoxelChunk {
@@ -186,7 +186,6 @@ fn fill_world_after_load(
     chunks: Res<Assets<VoxelChunk>>,
     blocks: Res<Blocks>,
     voxels: Res<Assets<super::voxels::Block>>,
-    voxel_lookup: Res<super::voxels::Blocks>,
 ) {
     for event in event.read() {
         match event {

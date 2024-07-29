@@ -13,7 +13,7 @@ use rand::{seq::IteratorRandom, Rng, SeedableRng};
 use strum::IntoEnumIterator;
 // ! Fix test module
 use crate::{
-    game::{main_character::Seed, HexSelect},
+    game::{save::Seed, HexSelect},
     screen::{
         hex_map::{
             bundle::HexCellBundle,

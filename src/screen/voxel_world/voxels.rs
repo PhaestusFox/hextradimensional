@@ -1,14 +1,13 @@
 use std::{array, hash::Hash, sync::Arc};
 
 use bevy::{
-    asset::{AssetLoader, AssetPath, AsyncReadExt},
+    asset::{AssetLoader, AsyncReadExt},
     ecs::system::EntityCommands,
     prelude::*,
-    reflect::TypeRegistry,
     utils::HashMap,
 };
 use serde::{Deserialize, Serialize};
-use serde_big_array::{Array, BigArray};
+use serde_big_array::Array;
 use strum::IntoEnumIterator;
 
 use crate::screen::hex_vox_util::MapDirection;
@@ -152,9 +151,11 @@ const VOXEL_DIVISION_FACTOR: usize = 16usize.pow(3);
     Debug,
     Component,
     Eq,
+    Default,
 )]
 #[strum_discriminants(derive(Hash))]
 pub enum BlockType {
+    #[default]
     Air,
     Stone,
     Coal,
@@ -175,12 +176,6 @@ pub enum BlockType {
     Magnesium,
     Piston(MapDirection),
     Voxel(VoxelBlock),
-}
-
-impl Default for BlockType {
-    fn default() -> Self {
-        BlockType::Air
-    }
 }
 
 #[derive(Serialize, Deserialize, Reflect, Clone, Debug, Component, PartialEq, Eq)]

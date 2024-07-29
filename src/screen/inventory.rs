@@ -1,10 +1,11 @@
 use bevy::{prelude::Component, reflect::Reflect};
+use serde::{Deserialize, Serialize};
 
 use crate::voxel_world::voxels::BlockType;
 
 /// Define a struct for inventory slots
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future
-#[derive(Debug, Clone, Reflect)]
+#[derive(Debug, Clone, Reflect, Serialize, Deserialize)]
 pub struct InventorySlot {
     pub resource_type: Option<BlockType>,
     pub quantity: u32,
@@ -12,7 +13,7 @@ pub struct InventorySlot {
 
 /// This is the inventory component, meant to be used in conjunction with Player
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future
-#[derive(Component, Reflect)]
+#[derive(Component, Reflect, Serialize, Deserialize, Debug)]
 pub struct Inventory {
     pub slots: Vec<InventorySlot>,
     pub selected_slot: usize,

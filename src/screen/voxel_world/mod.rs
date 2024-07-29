@@ -8,7 +8,7 @@ pub mod world;
 mod item;
 
 use super::{inventory::Inventory, Screen};
-use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack};
+use crate::game::{assets::SoundtrackKey, audio::soundtrack::PlaySoundtrack, save::inventory_save};
 use bevy::{ecs::system::EntityCommands, input::common_conditions::input_just_pressed, prelude::*};
 use player_controller::spawn_player;
 use serde::{Deserialize, Serialize};
@@ -38,7 +38,7 @@ pub(super) fn plugin(app: &mut App) {
     );
     app.add_systems(
         OnExit(Screen::VoxelWorld),
-        (exit_playing, cleanup_inventory_ui),
+        (exit_playing, cleanup_inventory_ui, inventory_save),
     );
 
     app.add_systems(
