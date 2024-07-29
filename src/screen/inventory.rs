@@ -124,6 +124,57 @@ pub fn change_row_inventory(
     input: Res<ButtonInput<KeyCode>>,
     mut player_inventory: Query<&mut Inventory, With<Player>>,
 ) {
+    if input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]) {
+        for key in input.get_just_pressed() {
+            match key {
+                KeyCode::Digit1 => {
+                    if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                        inventory.selected_row = 0;
+                        inventory.selected_slot = 0;
+                    }
+                }
+                KeyCode::Digit2 => {
+                    if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                        inventory.selected_row = 1;
+                        inventory.selected_slot = 10;
+                    }
+                }
+                KeyCode::Digit3 => {
+                    if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                        inventory.selected_row = 2;
+                        inventory.selected_slot = 20;
+                    }
+                }
+                KeyCode::Digit4 => {
+                    if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                        inventory.selected_row = 3;
+                        inventory.selected_slot = 30;
+                    }
+                }
+                KeyCode::Digit5 => {
+                    if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                        inventory.selected_row = 4;
+                        inventory.selected_slot = 40;
+                    }
+                }
+                KeyCode::Digit6 => {
+                    if let Ok(mut inventory) = player_inventory.get_single_mut() {
+                        inventory.selected_row = 5;
+                        inventory.selected_slot = 50;
+                    }
+                }
+                _ => {}
+            }
+        }
+    } else {
+        inc_dec(&input, &mut player_inventory)
+    }
+}
+
+fn inc_dec(
+    input: &ButtonInput<KeyCode>,
+    player_inventory: &mut Query<&mut Inventory, With<Player>>,
+) {
     if input.just_pressed(KeyCode::KeyQ) {
         if let Ok(mut inventory) = player_inventory.get_single_mut() {
             inventory.selected_row = (inventory.selected_row + 5) % 6;
