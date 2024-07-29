@@ -30,7 +30,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins(cursor::CursorPlugin)
         .init_resource::<CellIcons>();
 
-    #[cfg(debug_assertions)]
+    // #[cfg(debug_assertions)]
     app.add_systems(OnEnter(Screen::HexMap), spawn_hex_grid)
         .add_systems(Update, go_to_voxel.run_if(in_state(Screen::HexMap)));
 }

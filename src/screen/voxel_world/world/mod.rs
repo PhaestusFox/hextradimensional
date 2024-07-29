@@ -1,4 +1,7 @@
-use std::io::{Error, ErrorKind};
+use std::{
+    io::{Error, ErrorKind},
+    sync::Arc,
+};
 
 use crate::{
     game::HexSelect,
@@ -12,8 +15,10 @@ use bevy::{
     prelude::*,
     tasks::futures_lite::{AsyncRead, AsyncSeek},
 };
+use bevy_pkv::{GetError, PkvStore};
 use block_breaking::block_breaking_plugin;
 use rand::SeedableRng;
+use serde_big_array::Array;
 
 use super::{
     voxel_util::WorldType,
@@ -62,13 +67,14 @@ pub mod cheats;
 pub mod multi_block;
 
 pub const CHUNK_SIZE: usize = 16;
+pub const BLOCKS_IN_CHUNK: usize = CHUNK_SIZE.pow(3);
 
-#[derive(Asset, Reflect)]
-pub struct VoxelChunk([BlockType; CHUNK_SIZE.pow(3)]);
+#[derive(Asset, Reflect, serde::Serialize, serde::Deserialize)]
+pub struct VoxelChunk(#[reflect(ignore)] Array<BlockType, BLOCKS_IN_CHUNK>);
 
 impl VoxelChunk {
     fn new() -> VoxelChunk {
-        VoxelChunk(std::array::from_fn(|_| BlockType::default()))
+        VoxelChunk(Array(std::array::from_fn(|_| BlockType::default())))
     }
 
     fn from_hex(hex: &WorldType, rng: &mut impl rand::Rng) -> VoxelChunk {
@@ -125,6 +131,7 @@ impl VoxelChunk {
 
 pub(crate) fn voxel_world(app: &mut App) {
     block_breaking_plugin(app);
+    app.init_resource::<VoxelStore>();
     app.init_asset::<VoxelChunk>()
         .init_resource::<multi_block::MultiBlocks>();
     app.init_asset_loader::<VoxelChunkLoader>();
@@ -229,8 +236,31 @@ fn spawn_voxel(
     }
 }
 
-#[derive(Default)]
-struct VoxelChunkLoader;
+struct VoxelChunkLoader(VoxelStore);
+
+#[derive(Resource, Clone)]
+pub struct VoxelStore(Arc<std::sync::RwLock<PkvStore>>);
+
+impl VoxelStore {
+    pub fn write(&self) -> Option<std::sync::RwLockWriteGuard<'_, PkvStore>> {
+        self.0.write().ok()
+    }
+}
+
+impl FromWorld for VoxelStore {
+    fn from_world(world: &mut World) -> Self {
+        VoxelStore(Arc::new(std::sync::RwLock::new(PkvStore::new(
+            "Bevy Jam 5",
+            "Hextradimensional_Chunks",
+        ))))
+    }
+}
+
+impl FromWorld for VoxelChunkLoader {
+    fn from_world(world: &mut World) -> Self {
+        VoxelChunkLoader(world.resource::<VoxelStore>().clone())
+    }
+}
 
 impl AssetLoader for VoxelChunkLoader {
     type Asset = VoxelChunk;
@@ -246,31 +276,39 @@ impl AssetLoader for VoxelChunkLoader {
         load_context: &'a mut bevy::asset::LoadContext,
     ) -> impl bevy::utils::ConditionalSendFuture<Output = Result<Self::Asset, Self::Error>> {
         async {
-            let mut data = Vec::new();
-            match reader.read(&mut data).await {
-                Ok(_) => Err(std::io::Error::new(
-                    ErrorKind::Unsupported,
-                    "Loading not implemented get out of (1-1)",
-                )),
+            let Some(path) = load_context.path().to_str() else {
+                return Err(std::io::Error::new(
+                    ErrorKind::InvalidInput,
+                    "path could not be converted to str",
+                ));
+            };
+            let Ok(lock) = self.0 .0.read() else {
+                return Err(std::io::Error::new(
+                    ErrorKind::PermissionDenied,
+                    "Rwlock failed to read",
+                ));
+            };
+            match lock.get::<VoxelChunk>(path) {
+                Ok(chunk) => Ok(chunk),
+                Err(GetError::NotFound) => {
+                    let file = load_context
+                        .path()
+                        .file_name()
+                        .ok_or(Error::new(ErrorKind::NotFound, "failed get file name"))?
+                        .to_string_lossy();
+                    let hex = file.trim().parse::<HexId>().map_err(|e| {
+                        println!("{e}");
+                        std::io::Error::new(ErrorKind::NotFound, "failed to parse id")
+                    })?;
+                    let mut rng = rand::rngs::StdRng::seed_from_u64(
+                        ((hex.q() as u64) << 32) | hex.r() as u64,
+                    );
+                    let chunk = VoxelChunk::from_hex(settings, &mut rng);
+                    Ok(chunk)
+                }
                 Err(e) => {
-                    if e.kind() == ErrorKind::NotFound {
-                        let file = load_context
-                            .path()
-                            .file_name()
-                            .ok_or(Error::new(ErrorKind::NotFound, "failed get file name"))?
-                            .to_string_lossy();
-                        let hex = file.trim().parse::<HexId>().map_err(|e| {
-                            println!("{e}");
-                            std::io::Error::new(ErrorKind::NotFound, "failed to parse id")
-                        })?;
-                        let mut rng = rand::rngs::StdRng::seed_from_u64(
-                            ((hex.q() as u64) << 32) | hex.r() as u64,
-                        );
-                        let chunk = VoxelChunk::from_hex(settings, &mut rng);
-                        Ok(chunk)
-                    } else {
-                        Err(e)
-                    }
+                    error!("{}", e);
+                    Err(std::io::Error::new(ErrorKind::Unsupported, "pkv error"))
                 }
             }
         }

@@ -51,7 +51,7 @@ pub fn spawn_hex_grid(
 
     commands.entity(container_entity).with_children(|parent| {
         for hex_coord in cells::SpiralIter::new(10) {
-            let hex_type = if rng.gen_bool(0.3) {
+            let hex_type = if rng.gen_bool(0.5) {
                 WorldType::iter().choose(&mut rng).expect("Iter not Empty")
             } else {
                 WorldType::Empty

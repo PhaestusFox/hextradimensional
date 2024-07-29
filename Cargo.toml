@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0 OR CC0-1.0"
 [dependencies]
 bevy = { version = "0.14", features = ["wayland"] }
 
-bevy_editor_pls = {git = "https://github.com/zhaop/bevy_editor_pls.git", branch = "bevy-0.14"}
+# bevy_editor_pls = {git = "https://github.com/zhaop/bevy_editor_pls.git", branch = "bevy-0.14"}
 ron = "*"
 
 # Disable low-severity logs at compile time for performance.

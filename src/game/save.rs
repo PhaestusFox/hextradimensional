@@ -2,16 +2,20 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 
 use bevy::{
     app::{App, Startup},
-    log::info,
+    asset::Assets,
+    log::{error, info, warn},
     prelude::{Commands, Event, EventReader, Query, ReflectResource, Res, ResMut, Resource, With},
     reflect::{self, Reflect},
 };
 use bevy_pkv::PkvStore;
 use serde::{Deserialize, Serialize};
 
-use crate::screen::inventory::Inventory;
+use crate::screen::{
+    inventory::Inventory,
+    voxel_world::world::{VoxelChunk, VoxelStore},
+};
 
-use super::main_character::Player;
+use super::{main_character::Player, HexSelect};
 
 #[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect, Serialize, Deserialize)]
 #[reflect(Resource)]
@@ -86,6 +90,25 @@ pub fn inventory_save(
     let inventory = player_inventory.get_single().unwrap();
     pkv.set("inventory", inventory)
         .expect("failed to store seed");
+}
+
+pub fn save_chunk_data(
+    store: Res<VoxelStore>,
+    chunks: Res<Assets<VoxelChunk>>,
+    selected: Res<HexSelect>,
+) {
+    let Some(chunk) = chunks.get(selected.chunk.id()) else {
+        warn!("Chunk not loaded");
+        return;
+    };
+    if let Some(mut store) = store.write() {
+        info!("Saved chunk as {}", selected.hex_id.to_string());
+        if let Err(e) = store.set(selected.hex_id.to_string(), chunk) {
+            error!("Chunk not saved {e}");
+        };
+    } else {
+        warn!("Failed to write chunk to store");
+    }
 }
 
 pub(super) fn plugin(app: &mut App) {

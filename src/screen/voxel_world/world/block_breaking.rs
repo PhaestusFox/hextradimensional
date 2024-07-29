@@ -30,19 +30,19 @@ pub(crate) fn block_breaking_plugin(app: &mut App) {
     {
         app.init_resource::<BlockBreakDebugSettings>();
         app.register_type::<BlockBreakDebugSettings>();
-        app.add_systems(Update, draw_debug)
-            .add_systems(Update, block_placing.run_if(in_state(Screen::VoxelWorld)))
-            .add_systems(
-                Update,
-                (
-                    break_block,
-                    scail_breaking_block,
-                    unbreak_block,
-                    pickup_block,
-                )
-                    .chain(),
-            );
+        app.add_systems(Update, draw_debug);
     }
+    app.add_systems(Update, block_placing.run_if(in_state(Screen::VoxelWorld)))
+        .add_systems(
+            Update,
+            (
+                break_block,
+                scail_breaking_block,
+                unbreak_block,
+                pickup_block,
+            )
+                .chain(),
+        );
 }
 
 fn draw_debug(

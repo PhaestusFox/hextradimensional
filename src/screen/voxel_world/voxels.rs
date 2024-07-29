@@ -27,8 +27,7 @@ impl Plugin for VoxelPlugin {
     fn build(&self, app: &mut App) {
         app.init_asset::<Block>()
             .init_asset_loader::<BlockLoader>()
-            .init_resource::<Blocks>()
-            .add_systems(Startup, test_load);
+            .init_resource::<Blocks>();
     }
 }
 
@@ -90,7 +89,7 @@ enum BlockLogic {
     Extractor,
     Melter,
     ScoreGive,
-    Piston,
+    Piston(u8),
 }
 
 impl Block {
@@ -142,7 +141,7 @@ impl Block {
                 BlockLogic::Extractor => entity.insert(Extractor),
                 BlockLogic::Melter => entity.insert(Melter),
                 BlockLogic::ScoreGive => entity.insert(ScoreGive),
-                BlockLogic::Piston => entity.insert(Piston),
+                BlockLogic::Piston(power) => entity.insert(Piston(*power as f32)),
             };
         }
     }
@@ -182,6 +181,7 @@ pub enum BlockType {
     Potassium,
     Magnesium,
     Piston(MapDirection),
+    PistonL2(MapDirection),
     Voxel(VoxelBlock),
 }
 
@@ -257,6 +257,7 @@ impl BlockType {
             BlockType::Potassium => "blocks/potassium.block",
             BlockType::Magnesium => "blocks/magnesium.block",
             BlockType::Piston(_) => "blocks/piston.block",
+            BlockType::PistonL2(_) => "blocks/piston_l2.block",
             BlockType::Voxel(_) => "blocks/voxel.block",
         }
     }
@@ -282,6 +283,7 @@ impl BlockType {
             BlockType::Potassium => Color::srgba(1.0, 0.0, 1.0, 1.0), // Magenta
             BlockType::Magnesium => Color::srgba(1.0, 0.75, 0.8, 1.0), // Pink
             BlockType::Piston(_) => Color::srgba(0.5, 0.5, 0.0, 1.0), // Olive
+            BlockType::PistonL2(_) => Color::srgba(0.25, 0.25, 0.0, 1.0), // Olive / 2.?
             BlockType::Voxel(_) => Color::srgba(1.0, 1.0, 1.0, 1.0), // White
         }
     }
@@ -367,8 +369,4 @@ enum LoadError {
     Io(#[from] std::io::Error),
     #[error("Ron Error: {0}")]
     Ron(#[from] ron::de::SpannedError),
-}
-
-fn test_load(asset_server: Res<AssetServer>) {
-    asset_server.load::<Block>("blocks/stone.block");
 }

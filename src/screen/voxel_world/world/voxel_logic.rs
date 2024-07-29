@@ -168,16 +168,16 @@ fn score_logic(
 }
 
 #[derive(Component)]
-pub struct Piston;
+pub struct Piston(pub f32);
 
 fn piston_logic(
-    pistons: Query<&Transform, With<Piston>>,
+    pistons: Query<(&Transform, &Piston)>,
     context: Res<RapierContext>,
     items: Query<Entity, With<Item>>,
     player: Query<&Parent, With<VoxelPlayer>>,
     mut commands: Commands,
 ) {
-    for pos in &pistons {
+    for (pos, power) in &pistons {
         let Some((hit, _)) = context.cast_shape(
             pos.translation,
             Quat::IDENTITY,
@@ -198,7 +198,7 @@ fn piston_logic(
             if hit == player.get() {
                 commands.entity(player.get()).insert(ExternalImpulse {
                     torque_impulse: Vec3::ZERO,
-                    impulse: pos.up() * 25.,
+                    impulse: pos.up() * 25. * power.0,
                 });
             }
         }
@@ -206,7 +206,7 @@ fn piston_logic(
         if let Ok(block) = items.get(hit) {
             commands.entity(block).insert(ExternalImpulse {
                 torque_impulse: Vec3::ZERO,
-                impulse: pos.up() * 5.,
+                impulse: pos.up() * 5. * power.0,
             });
         }
     }

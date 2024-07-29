@@ -26,15 +26,7 @@ pub fn give_player_block(
             KeyCode::Numpad3 => BlockType::Drill(crate::screen::hex_vox_util::MapDirection::Up),
             KeyCode::Numpad4 => BlockType::Score,
             KeyCode::Numpad5 => BlockType::Piston(crate::screen::hex_vox_util::MapDirection::Up),
-            KeyCode::Numpad6 => {
-                BlockType::Voxel(VoxelBlock(Arc::new(Array(array::from_fn(|x| {
-                    if x < 2000 {
-                        BlockType::default()
-                    } else {
-                        BlockType::Sand
-                    }
-                })))))
-            }
+            KeyCode::Numpad6 => BlockType::PistonL2(crate::screen::hex_vox_util::MapDirection::Up),
             _ => continue,
         };
         for mut inventory in &mut player {

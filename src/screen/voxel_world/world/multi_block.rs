@@ -189,6 +189,46 @@ impl FromWorld for MultiBlocks {
                 output_clear: vec![ClearType::All],
             },
         );
+        map.insert(
+            MultiBlockType::PistonL2,
+            MultiBlockRecipe {
+                size: IVec3::splat(3),
+                rules: vec![
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::CopperBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::CopperBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::IronBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                    MultiBlockRule::Specific(BlockType::CobaltBlock),
+                ],
+                output_block: MultiOutput::Specific(BlockType::PistonL2(
+                    crate::screen::hex_vox_util::MapDirection::Down,
+                )),
+                output_offset: IVec3 { x: 1, y: 1, z: 1 },
+                output_clear: vec![ClearType::All],
+            },
+        );
         MultiBlocks { recipes: map }
     }
 }
@@ -225,6 +265,7 @@ enum MultiBlockType {
     Drill,
     Score,
     Piston,
+    PistonL2,
 }
 
 struct MultiBlockRecipe {
