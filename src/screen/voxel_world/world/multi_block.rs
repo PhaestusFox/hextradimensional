@@ -407,7 +407,6 @@ pub fn check_for_multi_blocks(
                         }
                         chunk.set(pos, block);
                     }
-                    println!("Found multi block");
                 }
             }
         }

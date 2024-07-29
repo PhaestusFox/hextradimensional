@@ -3,7 +3,7 @@ use crate::{
     screen::inventory::Inventory,
     ui::widgets::{Containers, UiRoot, Widgets},
 };
-use bevy::prelude::*;
+use bevy::{input::mouse::MouseWheel, prelude::*};
 
 use super::voxels::{Block, Blocks}; // Adjust this path as needed
 
@@ -70,6 +70,7 @@ pub fn update_inventory_ui(
 pub fn handle_slot_selection(
     mut inventory_query: Query<&mut Inventory, With<Player>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut mouse_wheel: EventReader<MouseWheel>,
 ) {
     if let Ok(mut inventory) = inventory_query.get_single_mut() {
         for (i, key) in [
@@ -92,5 +93,8 @@ pub fn handle_slot_selection(
                 break;
             }
         }
+        let delta: f32 = mouse_wheel.read().map(|e| e.y).sum();
+        let new = (inventory.selected_slot as isize + delta as isize) % 10;
+        inventory.select_slot(new as usize);
     }
 }

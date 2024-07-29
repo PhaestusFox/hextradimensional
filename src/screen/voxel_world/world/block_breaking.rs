@@ -196,7 +196,6 @@ fn block_placing(
     };
     let up = normal_to_direction(normal.normal);
     block_type.set_direction(up);
-    println!("Up: {:?} = {}", up, up.to_rotation());
     let block = voxels.get(block_type.clone());
     let block = voxel_data.get(block.id()).expect("All blocks loaded");
     let mut entity = commands.spawn((
