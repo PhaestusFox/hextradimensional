@@ -1,11 +1,11 @@
 //! The screen state for the voxel world game loop.
 
+mod item;
 mod player_controller;
 pub mod ui;
+mod voxel_block_generation;
 pub mod voxel_util;
 pub mod world;
-
-mod item;
 
 use super::{
     inventory::{change_row_inventory, Inventory},

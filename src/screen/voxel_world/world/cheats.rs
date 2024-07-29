@@ -1,10 +1,16 @@
+use std::{array, sync::Arc};
+
 use bevy::prelude::*;
+use serde_big_array::Array;
 
 use crate::{
     game::main_character::Player,
     screen::{
         inventory::Inventory,
-        voxel_world::{voxel_util::VoxelPlayer, voxels::BlockType},
+        voxel_world::{
+            voxel_util::VoxelPlayer,
+            voxels::{BlockType, VoxelBlock},
+        },
     },
 };
 
@@ -20,6 +26,15 @@ pub fn give_player_block(
             KeyCode::Numpad3 => BlockType::Drill(crate::screen::hex_vox_util::MapDirection::Up),
             KeyCode::Numpad4 => BlockType::Score,
             KeyCode::Numpad5 => BlockType::Piston(crate::screen::hex_vox_util::MapDirection::Up),
+            KeyCode::Numpad6 => {
+                BlockType::Voxel(VoxelBlock(Arc::new(Array(array::from_fn(|x| {
+                    if x < 2000 {
+                        BlockType::default()
+                    } else {
+                        BlockType::Sand
+                    }
+                })))))
+            }
             _ => continue,
         };
         for mut inventory in &mut player {

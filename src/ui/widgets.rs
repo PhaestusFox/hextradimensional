@@ -159,7 +159,8 @@ impl<T: Spawn> Widgets for T {
         let (image_handle, image_color) = match &slot.resource_type {
             Some(block_type) => {
                 let block = voxels.get(block_type.clone());
-                let block = blocks.get(block.id()).expect("All blocks loaded");
+                println!("{}", block.id());
+                let block = blocks.get(block.id()).expect("Block Struct Failed to Load");
                 let material = materials
                     .get(block.material().id())
                     .expect("block material to exist");

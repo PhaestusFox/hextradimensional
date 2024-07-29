@@ -1,16 +1,25 @@
-use std::{array, hash::Hash, sync::Arc};
-
 use bevy::{
     asset::{AssetLoader, AsyncReadExt},
     ecs::system::EntityCommands,
     prelude::*,
+    render::{
+        mesh::{Indices, PrimitiveTopology},
+        render_asset::RenderAssetUsages,
+    },
     utils::HashMap,
+};
+use block_mesh::{
+    greedy_quads, ndshape::ConstShape3u32, GreedyQuadsBuffer, MergeVoxel, Voxel, VoxelVisibility,
+    RIGHT_HANDED_Y_UP_CONFIG,
 };
 use serde::{Deserialize, Serialize};
 use serde_big_array::Array;
+use std::{array, hash::Hash, sync::Arc};
 use strum::IntoEnumIterator;
 
 use crate::screen::hex_vox_util::MapDirection;
+
+use super::voxel_block_generation::generate_voxel_mesh;
 
 pub struct VoxelPlugin;
 
@@ -139,8 +148,6 @@ impl Block {
     }
 }
 
-const VOXEL_DIVISION_FACTOR: usize = 16usize.pow(3);
-
 #[derive(
     Serialize,
     Deserialize,
@@ -178,8 +185,10 @@ pub enum BlockType {
     Voxel(VoxelBlock),
 }
 
+const VOXEL_DIVISION_FACTOR: usize = 16usize.pow(3);
+
 #[derive(Serialize, Deserialize, Reflect, Clone, Debug, Component, PartialEq, Eq)]
-pub struct VoxelBlock(#[reflect(ignore)] Arc<Array<BlockType, VOXEL_DIVISION_FACTOR>>);
+pub struct VoxelBlock(#[reflect(ignore)] pub Arc<Array<BlockType, VOXEL_DIVISION_FACTOR>>);
 
 impl Default for VoxelBlock {
     fn default() -> Self {
@@ -251,6 +260,31 @@ impl BlockType {
             BlockType::Voxel(_) => "blocks/voxel.block",
         }
     }
+
+    pub fn color(&self) -> Color {
+        match self {
+            BlockType::Air => Color::srgba(0.0, 0.0, 0.0, 0.0), // Transparent
+            BlockType::Stone => Color::srgba(0.5, 0.5, 0.5, 1.0), // Gray
+            BlockType::Coal => Color::srgba(0.1, 0.1, 0.1, 1.0), // Black
+            BlockType::IronOre => Color::srgba(0.8, 0.2, 0.2, 1.0), // Red
+            BlockType::IronBlock => Color::srgba(0.7, 0.7, 0.7, 1.0), // Silver
+            BlockType::BedRock => Color::srgba(0.3, 0.3, 0.3, 1.0), // Dark Gray
+            BlockType::Score => Color::srgba(1.0, 0.84, 0.0, 1.0), // Gold
+            BlockType::Furnace => Color::srgba(0.8, 0.4, 0.0, 1.0), // Orange-Red
+            BlockType::Drill(_) => Color::srgba(0.5, 0.0, 0.5, 1.0), // Purple
+            BlockType::Sand => Color::srgba(0.94, 0.87, 0.69, 1.0), // Yellow
+            BlockType::Glass => Color::srgba(0.8, 1.0, 1.0, 1.0), // Cyan
+            BlockType::CobaltOre => Color::srgba(0.0, 0.0, 0.8, 1.0), // Blue
+            BlockType::CobaltBlock => Color::srgba(0.0, 0.0, 0.5, 1.0), // Navy
+            BlockType::CopperOre => Color::srgba(0.0, 0.8, 0.0, 1.0), // Green
+            BlockType::CopperBlock => Color::srgba(1.0, 0.65, 0.0, 1.0), // Orange
+            BlockType::Sodium => Color::srgba(0.6, 0.8, 0.2, 1.0), // Yellow-Green
+            BlockType::Potassium => Color::srgba(1.0, 0.0, 1.0, 1.0), // Magenta
+            BlockType::Magnesium => Color::srgba(1.0, 0.75, 0.8, 1.0), // Pink
+            BlockType::Piston(_) => Color::srgba(0.5, 0.5, 0.0, 1.0), // Olive
+            BlockType::Voxel(_) => Color::srgba(1.0, 1.0, 1.0, 1.0), // White
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Reflect, PartialEq, Eq)]
@@ -286,16 +320,27 @@ impl AssetLoader for BlockLoader {
         async {
             let mut str = String::default();
             reader.read_to_string(&mut str).await?;
+            println!("{}", str);
             let block = ron::from_str::<BlockAsset>(&str)?;
+
+            let mesh = match &block.id {
+                BlockType::Voxel(voxel_block) => {
+                    let mesh = generate_voxel_mesh(voxel_block);
+                    load_context.add_labeled_asset("mesh".to_string(), mesh.mesh)
+                }
+                _ => {
+                    if let Some(path) = block.mesh {
+                        load_context.load(path)
+                    } else {
+                        self.default_mesh.clone()
+                    }
+                }
+            };
 
             Ok(Block {
                 id: block.id,
                 flags: block.flags,
-                mesh: if let Some(path) = block.mesh {
-                    load_context.load(path)
-                } else {
-                    self.default_mesh.clone()
-                },
+                mesh,
                 material: {
                     let material = StandardMaterial {
                         base_color: block.color,
@@ -304,7 +349,7 @@ impl AssetLoader for BlockLoader {
                         unlit: true,
                         ..Default::default()
                     };
-                    load_context.add_labeled_asset(String::from("material"), material)
+                    load_context.add_labeled_asset("material".to_string(), material)
                 },
                 color: block.color,
                 solid: block.solid,
