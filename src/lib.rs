@@ -17,11 +17,7 @@ impl Plugin for AppPlugin {
     fn build(&self, app: &mut App) {
         app.register_asset_source(
             "chunk",
-            AssetSource::build().with_reader(|| {
-                Box::new(voxel_world::world::ChunkReader(
-                    AssetSource::get_default_reader("savedata".to_string())(),
-                ))
-            }),
+            AssetSource::build().with_reader(|| Box::new(voxel_world::world::ChunkReader)),
         );
 
         // Order new `AppStep` variants by adding them here:

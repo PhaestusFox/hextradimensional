@@ -315,7 +315,7 @@ impl AssetLoader for VoxelChunkLoader {
     }
 }
 
-pub struct ChunkReader(pub Box<dyn ErasedAssetReader>);
+pub struct ChunkReader;
 
 struct NotFoundReader;
 impl AsyncSeek for NotFoundReader {
