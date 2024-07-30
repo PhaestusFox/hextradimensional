@@ -344,15 +344,9 @@ impl AsyncRead for NotFoundReader {
 impl AssetReader for ChunkReader {
     async fn read<'a>(
         &'a self,
-        path: &'a std::path::Path,
+        _path: &'a std::path::Path,
     ) -> Result<Box<Reader<'a>>, AssetReaderError> {
-        match self.0.read(path).await {
-            Ok(reader) => Ok(reader),
-            Err(e) => match e {
-                AssetReaderError::NotFound(_) => Ok(Box::new(NotFoundReader)),
-                e => Err(e),
-            },
-        }
+        Ok(Box::new(NotFoundReader))
     }
 
     fn read_meta<'a>(
