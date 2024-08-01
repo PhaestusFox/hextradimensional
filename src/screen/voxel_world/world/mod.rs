@@ -9,7 +9,7 @@ use crate::{
 };
 use bevy::{
     asset::{
-        io::{AssetReader, AssetReaderError, ErasedAssetReader, Reader},
+        io::{AssetReader, AssetReaderError, Reader},
         AssetLoader,
     },
     prelude::*,
@@ -70,10 +70,10 @@ pub const CHUNK_SIZE: usize = 16;
 pub const BLOCKS_IN_CHUNK: usize = CHUNK_SIZE.pow(3);
 
 #[derive(Asset, Reflect, serde::Serialize, serde::Deserialize)]
-pub struct VoxelChunk(#[reflect(ignore)] Array<BlockType, BLOCKS_IN_CHUNK>);
+pub struct VoxelChunk(#[reflect(ignore)] pub Array<BlockType, BLOCKS_IN_CHUNK>);
 
 impl VoxelChunk {
-    fn new() -> VoxelChunk {
+    pub fn new() -> VoxelChunk {
         VoxelChunk(Array(std::array::from_fn(|_| BlockType::default())))
     }
 
@@ -251,7 +251,7 @@ impl FromWorld for VoxelStore {
     fn from_world(_world: &mut World) -> Self {
         VoxelStore(Arc::new(std::sync::RwLock::new(PkvStore::new(
             "Bevy Jam 5",
-            "Hextradimensional_Chunks",
+            "Hextradimensional",
         ))))
     }
 }

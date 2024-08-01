@@ -4,7 +4,7 @@ use bevy::{
     app::{App, Startup},
     asset::Assets,
     log::{error, info, warn},
-    prelude::{Commands, Query, ReflectResource, Res, ResMut, Resource, With},
+    prelude::{Commands, Query, ReflectResource, Res, Resource, With},
     reflect::Reflect,
 };
 use serde::{Deserialize, Serialize};
@@ -61,9 +61,7 @@ fn seed_load_and_save(
                 }
             } else {
                 error!("failed to get pkv store");
-                let seed = Seed::from_string("Bevy Jam 5 Hextradimensional".to_string());
-
-                seed
+                Seed::from_string("Bevy Jam 5 Hextradimensional".to_string())
             }
         }
     };
@@ -76,7 +74,7 @@ pub fn inventory_load(
     pkv: Res<VoxelStore>,
     mut player_inventory: Query<&mut Inventory, With<Player>>,
 ) {
-    if let Some(mut pkv) = pkv.write() {
+    if let Some(pkv) = pkv.write() {
         let inventory = if let Ok(inventory) = pkv.get::<Inventory>("inventory") {
             info!("Inventory is {:?}", inventory);
             inventory

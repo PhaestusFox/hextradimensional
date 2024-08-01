@@ -39,6 +39,15 @@ impl Inventory {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.selected_row = 0;
+        self.selected_slot = 0;
+        for item in self.slots.iter_mut() {
+            item.quantity = 0;
+            item.resource_type = None;
+        }
+    }
+
     /// returns true if added and false if Inventory full
     pub fn add_resource(&mut self, resource_type: BlockType, quantity: u32) -> bool {
         // First, try to find a matching slot and add to it
@@ -117,6 +126,17 @@ impl Inventory {
 
     pub fn get_selected_block(&self) -> Option<BlockType> {
         self.slots[self.selected_slot].resource_type.clone()
+    }
+}
+
+pub fn clear_inventory(
+    input: Res<ButtonInput<KeyCode>>,
+    mut player_inventory: Query<&mut Inventory, With<Player>>,
+) {
+    if input.just_pressed(KeyCode::NumpadSubtract) {
+        for mut inventory in &mut player_inventory {
+            inventory.clear()
+        }
     }
 }
 

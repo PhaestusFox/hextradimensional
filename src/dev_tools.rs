@@ -2,7 +2,7 @@
 
 use bevy::{dev_tools::states::log_transitions, prelude::*};
 
-use crate::screen::Screen;
+use crate::screen::{inventory::clear_inventory, Screen};
 
 pub(super) fn plugin(app: &mut App) {
     // Print state transitions in dev builds
@@ -12,6 +12,7 @@ pub(super) fn plugin(app: &mut App) {
     // Add Debug Rendering for rapier
     app.add_plugins(bevy_rapier3d::prelude::RapierDebugRenderPlugin::default());
     app.add_systems(Update, toggle_rapier_debug);
+    app.add_systems(Update, clear_inventory);
 }
 
 fn toggle_rapier_debug(

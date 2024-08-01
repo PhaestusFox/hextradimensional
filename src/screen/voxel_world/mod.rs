@@ -64,6 +64,20 @@ pub(super) fn plugin(app: &mut App) {
     app.register_type::<Inventory>();
     app.add_plugins(item::ItemPlugin);
     app.add_systems(Update, change_row_inventory);
+
+    app.add_systems(
+        Update,
+        (
+            voxel_block_generation::compress,
+            voxel_block_generation::generate_dynamic_voxels,
+        )
+            .run_if(in_state(Screen::HexMap)),
+    );
+
+    app.add_systems(Update, voxel_block_generation::test_if_voxel_genrate);
+
+    app.init_resource::<voxel_block_generation::VoxelDataMap>();
+
     world::voxel_world(app);
 }
 

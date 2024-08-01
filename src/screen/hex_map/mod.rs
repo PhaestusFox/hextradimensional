@@ -2,7 +2,7 @@
 mod animation;
 mod bundle;
 pub(crate) mod cells;
-mod cursor;
+pub mod cursor;
 mod hex_util;
 pub mod movement;
 pub mod spawn;

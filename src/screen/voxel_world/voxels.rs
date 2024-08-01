@@ -15,7 +15,7 @@ use strum::IntoEnumIterator;
 
 use crate::screen::hex_vox_util::MapDirection;
 
-use super::voxel_block_generation::generate_voxel_mesh;
+use super::voxel_block_generation::{generate_voxel_mesh, VoxelBlockId};
 
 pub struct VoxelPlugin;
 
@@ -38,6 +38,10 @@ impl Blocks {
             .get(&block)
             .cloned()
             .expect("All blocks be loaded")
+    }
+
+    pub fn set(&mut self, block: BlockType, handle: Handle<Block>) {
+        self.type_to_asset.insert(block, handle);
     }
 }
 
@@ -71,17 +75,17 @@ fn default_solid() -> bool {
 
 #[derive(Asset, Reflect, Debug)]
 pub struct Block {
-    id: BlockType,
-    flags: Vec<BlockFlags>,
-    mesh: Handle<Mesh>,
-    material: Handle<StandardMaterial>,
-    color: Color,
-    solid: bool,
-    components: Vec<BlockLogic>,
+    pub id: BlockType,
+    pub flags: Vec<BlockFlags>,
+    pub mesh: Handle<Mesh>,
+    pub material: Handle<StandardMaterial>,
+    pub color: Color,
+    pub solid: bool,
+    pub components: Vec<BlockLogic>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Reflect)]
-enum BlockLogic {
+pub enum BlockLogic {
     Extractor,
     Melter,
     ScoreGive,
@@ -178,7 +182,7 @@ pub enum BlockType {
     Magnesium,
     Piston(MapDirection),
     PistonL2(MapDirection),
-    Voxel(VoxelBlock),
+    Voxel(VoxelBlockId),
 }
 
 const VOXEL_DIVISION_FACTOR: usize = 16usize.pow(3);
@@ -205,13 +209,19 @@ fn hash_test() {
 
 impl Hash for BlockType {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        BlockTypeDiscriminants::from(self).hash(state)
+        BlockTypeDiscriminants::from(self).hash(state);
+        if let BlockType::Voxel(id) = self {
+            id.hash(state);
+        }
     }
 }
 
 impl PartialEq for BlockType {
     fn eq(&self, other: &Self) -> bool {
-        BlockTypeDiscriminants::from(self) == BlockTypeDiscriminants::from(other)
+        match (self, other) {
+            (BlockType::Voxel(id), BlockType::Voxel(other)) => id == other,
+            (_, _) => BlockTypeDiscriminants::from(self) == BlockTypeDiscriminants::from(other),
+        }
     }
 }
 
@@ -286,7 +296,7 @@ impl BlockType {
 }
 
 #[derive(Serialize, Deserialize, Reflect, PartialEq, Eq, Debug)]
-enum BlockFlags {
+pub enum BlockFlags {
     NoMine,
     CanMelt(BlockType),
     Fuel,
@@ -321,10 +331,6 @@ impl AssetLoader for BlockLoader {
             let block = ron::from_str::<BlockAsset>(&str)?;
 
             let mesh = match &block.id {
-                BlockType::Voxel(voxel_block) => {
-                    let mesh = generate_voxel_mesh(voxel_block);
-                    load_context.add_labeled_asset("mesh".to_string(), mesh.mesh)
-                }
                 _ => {
                     if let Some(path) = block.mesh {
                         load_context.load(path)
