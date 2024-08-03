@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
+use leafwing_input_manager::prelude::ActionState;
 use rand::{seq::IteratorRandom, Rng, SeedableRng};
 use strum::IntoEnumIterator;
 // ! Fix test module
 use crate::{
-    game::{save::Seed, HexSelect},
+    game::{save::Seed, HexSelect, PlayerAction},
     screen::{
         hex_map::{
             bundle::HexCellBundle,
@@ -69,13 +70,17 @@ pub fn spawn_hex_grid(
 }
 
 pub fn go_to_voxel(
-    input: Res<ButtonInput<KeyCode>>,
+    input: Query<&ActionState<PlayerAction>>,
     cursor: Query<(&HexId, &MapDirection), With<cursor::Cursor>>,
     hexes: Query<(&HexId, &WorldType)>,
     mut hex_select: ResMut<HexSelect>,
     mut next_screen: ResMut<NextState<Screen>>,
 ) {
-    if input.just_pressed(KeyCode::Enter) {
+    let Ok(input) = input.get_single() else {
+        warn!("Player not found");
+        return;
+    };
+    if input.just_pressed(&PlayerAction::EnterHex) {
         let cursor = cursor.single();
         let mut hex_type = WorldType::Empty;
         for (id, hex) in &hexes {

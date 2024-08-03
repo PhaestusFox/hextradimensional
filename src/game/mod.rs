@@ -11,6 +11,7 @@ use bevy::{
     app::{App, Startup},
     asset::Handle,
     prelude::{IntoSystemConfigs, Resource},
+    reflect::Reflect,
 };
 use main_character::spawn_main_player;
 use save::inventory_load;
@@ -37,4 +38,23 @@ pub struct HexSelect {
     pub direction: MapDirection,
     pub world: voxel_world::voxel_util::WorldType,
     pub chunk: Handle<VoxelChunk>,
+}
+
+#[derive(leafwing_input_manager::Actionlike, Reflect, Clone, Copy, Hash, PartialEq, Eq)]
+pub enum PlayerAction {
+    Hit,
+    Place,
+    Jump,
+    Move,
+    Look,
+    MoveUp,
+    MoveDown,
+    MoveLeft,
+    MoveRight,
+    EnterHex,
+    ExitChunk,
+    ToolbarNext,
+    ToolbarPrev,
+    ItemInc,
+    ItemDec,
 }

@@ -135,7 +135,10 @@ pub(crate) fn voxel_world(app: &mut App) {
     app.init_asset::<VoxelChunk>()
         .init_resource::<multi_block::MultiBlocks>();
     app.init_asset_loader::<VoxelChunkLoader>();
-    app.add_systems(FixedUpdate, multi_block::check_for_multi_blocks);
+    app.add_systems(
+        FixedUpdate,
+        multi_block::check_for_multi_blocks.run_if(in_state(Screen::VoxelWorld)),
+    );
     app.add_systems(
         Update,
         fill_world_after_load.run_if(in_state(Screen::VoxelWorld)),

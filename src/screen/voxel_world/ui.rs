@@ -1,9 +1,10 @@
 use crate::{
-    game::main_character::Player,
+    game::{main_character::Player, PlayerAction},
     screen::inventory::Inventory,
     ui::widgets::{Containers, UiRoot, Widgets},
 };
 use bevy::{input::mouse::MouseWheel, prelude::*};
+use leafwing_input_manager::prelude::ActionState;
 
 use super::voxels::{Block, Blocks}; // Adjust this path as needed
 
@@ -71,6 +72,7 @@ pub fn handle_slot_selection(
     mut inventory_query: Query<&mut Inventory, With<Player>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut mouse_wheel: EventReader<MouseWheel>,
+    input: Query<&ActionState<PlayerAction>>,
 ) {
     if let Ok(mut inventory) = inventory_query.get_single_mut() {
         for (i, key) in [
@@ -93,8 +95,12 @@ pub fn handle_slot_selection(
                 break;
             }
         }
-        let delta: f32 = mouse_wheel.read().map(|e| e.y).sum();
-        let new = (inventory.selected_slot as isize + delta as isize) % 10;
+        let mut delta = 0;
+        if let Ok(input) = input.get_single() {
+            delta += input.just_pressed(&PlayerAction::ItemInc) as isize;
+            delta -= input.just_pressed(&PlayerAction::ItemDec) as isize;
+        }
+        let new = (inventory.selected_slot as isize + delta) % 10;
         inventory.select_slot(new as usize);
     }
 }

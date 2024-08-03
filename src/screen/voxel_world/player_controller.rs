@@ -1,7 +1,9 @@
 use crate::{
-    game::HexSelect,
+    game::{HexSelect, PlayerAction},
     screen::{hex_vox_util::MapDirection, voxel_world::voxel_util::VoxelPlayer, Screen},
 };
+
+use leafwing_input_manager::prelude::*;
 
 use bevy::{
     ecs::event::ManualEventReader,
@@ -33,22 +35,31 @@ impl Plugin for VoxelCamera {
 fn player_move(
     mut player: Query<&mut bevy_rapier3d::prelude::KinematicCharacterController>,
     camera: Query<(&Transform, &Parent), With<VoxelPlayer>>,
-    settings: Res<VoxelSettings>,
-    input: Res<ButtonInput<KeyCode>>,
+    input: Query<&ActionState<PlayerAction>>,
     time: Res<Time>,
 ) {
+    let Ok(input) = input.get_single() else {
+        return;
+    };
     for (camera, body) in &camera {
         let mut delta = Vec3::ZERO;
-        if input.pressed(settings.move_forward) {
+
+        if let Some(input) = input.axis_pair(&PlayerAction::Move) {
+            let offset = input.xy().round();
+            delta.x += offset.x;
+            delta.z += offset.y;
+        };
+
+        if input.pressed(&PlayerAction::MoveUp) {
             delta.z += 1.;
         }
-        if input.pressed(settings.move_backward) {
+        if input.pressed(&PlayerAction::MoveDown) {
             delta.z -= 1.;
         }
-        if input.pressed(settings.move_left) {
+        if input.pressed(&PlayerAction::MoveLeft) {
             delta.x -= 1.;
         }
-        if input.pressed(settings.move_right) {
+        if input.pressed(&PlayerAction::MoveRight) {
             delta.x += 1.;
         }
         let mut forward = camera.forward().as_vec3();
@@ -79,26 +90,19 @@ fn player_look(
     mut state: ResMut<InputState>,
     motion: Res<Events<MouseMotion>>,
     mut query: Query<&mut Transform, With<VoxelPlayer>>,
+    input: Query<&ActionState<PlayerAction>>,
 ) {
+    let Ok(input) = input.get_single() else {
+        warn!("Player not found");
+        return;
+    };
     if let Ok(window) = primary_window.get_single() {
         for mut transform in query.iter_mut() {
-            for ev in state.reader_motion.read(&motion) {
+            if let Some(data) = input.axis_pair(&PlayerAction::Look) {
                 let (mut yaw, mut pitch, _) = transform.rotation.to_euler(EulerRot::YXZ);
-                match window.cursor.grab_mode {
-                    CursorGrabMode::None => (),
-                    _ => {
-                        // Using smallest of height or width ensures equal vertical and horizontal sensitivity
-                        let window_scale = window.height().min(window.width());
-                        pitch -=
-                            (settings.mouse_sensitivity * ev.delta.y * window_scale).to_radians();
-                        yaw -=
-                            (settings.mouse_sensitivity * ev.delta.x * window_scale).to_radians();
-                    }
-                }
-
-                pitch = pitch.clamp(-1.54, 1.54);
-
-                // Order is important to prevent unintended roll
+                let window_scale = window.height().min(window.width());
+                pitch -= (settings.mouse_sensitivity * data.y() * window_scale).to_radians();
+                yaw -= (settings.mouse_sensitivity * data.x() * window_scale).to_radians();
                 transform.rotation =
                     Quat::from_axis_angle(Vec3::Y, yaw) * Quat::from_axis_angle(Vec3::X, pitch);
             }
@@ -151,11 +155,6 @@ fn cursor_toggle(
 
 #[derive(Resource)]
 pub struct VoxelSettings {
-    pub move_forward: KeyCode,
-    pub move_backward: KeyCode,
-    pub move_left: KeyCode,
-    pub move_right: KeyCode,
-    pub jump: KeyCode,
     pub toggle_grab_cursor: KeyCode,
     pub mouse_sensitivity: f32,
 }
@@ -163,11 +162,6 @@ pub struct VoxelSettings {
 impl Default for VoxelSettings {
     fn default() -> Self {
         Self {
-            move_forward: KeyCode::KeyW,
-            move_backward: KeyCode::KeyS,
-            move_left: KeyCode::KeyA,
-            move_right: KeyCode::KeyD,
-            jump: KeyCode::Space,
             toggle_grab_cursor: KeyCode::Backquote,
             mouse_sensitivity: 0.00012,
         }
@@ -205,12 +199,15 @@ fn apply_jump(
 }
 
 fn player_jump(
-    input: Res<ButtonInput<KeyCode>>,
-    settings: Res<VoxelSettings>,
+    input: Query<&ActionState<PlayerAction>>,
     mut commands: Commands,
     players: Query<(Entity, &KinematicCharacterControllerOutput)>,
 ) {
-    if input.just_pressed(settings.jump) {
+    let Ok(input) = input.get_single() else {
+        return;
+    };
+
+    if input.just_pressed(&PlayerAction::Jump) {
         for (entity, output) in &players {
             if output.grounded {
                 commands.entity(entity).insert(Jump { left: 3. });

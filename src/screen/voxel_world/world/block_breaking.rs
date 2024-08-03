@@ -1,5 +1,5 @@
 use crate::{
-    game::{audio::sfx::PlaySfx, main_character::Player, HexSelect},
+    game::{audio::sfx::PlaySfx, main_character::Player, HexSelect, PlayerAction},
     screen::{
         hex_vox_util::MapDirection,
         inventory::Inventory,
@@ -12,6 +12,7 @@ use crate::{
 };
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use leafwing_input_manager::{action_state::ActionData, prelude::ActionState};
 
 use super::{VoxelChunk, VoxelId};
 
@@ -77,12 +78,17 @@ fn unbreak_block(
 
 fn break_block(
     mut commands: Commands,
-    input: Res<ButtonInput<MouseButton>>,
+    input: Query<&ActionState<PlayerAction>>,
     physics: Res<RapierContext>,
     player: Query<(&Parent, &GlobalTransform), With<VoxelPlayer>>,
     mut voxels: Query<Option<&mut Breaking>, With<VoxelId>>,
 ) {
-    if !input.just_pressed(MouseButton::Left) {
+    let Ok(input) = input.get_single() else {
+        warn!("no player");
+        return;
+    };
+
+    if !input.just_pressed(&PlayerAction::Hit) {
         return;
     }
     for (ignore, player) in &player {
@@ -157,9 +163,8 @@ fn scail_breaking_block(
 
 fn block_placing(
     mut commands: Commands,
-    mut inventory: Query<&mut Inventory, With<Player>>,
+    mut player: Query<(&mut Inventory, &ActionState<PlayerAction>), With<Player>>,
     transform: Query<&GlobalTransform, With<VoxelPlayer>>,
-    input: Res<ButtonInput<MouseButton>>,
     physics: Res<RapierContext>,
     blocks: Query<&VoxelId>,
     selected: Res<HexSelect>,
@@ -167,7 +172,12 @@ fn block_placing(
     voxels: Res<Blocks>,
     voxel_data: Res<Assets<Block>>,
 ) {
-    if !input.just_pressed(MouseButton::Right) {
+    let Ok((mut inventory, input)) = player.get_single_mut() else {
+        warn!("No Player Spawned");
+        return;
+    };
+
+    if !input.just_pressed(&PlayerAction::Place) {
         return;
     }
 
@@ -191,7 +201,7 @@ fn block_placing(
     let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
         return;
     };
-    let Some(mut block_type) = inventory.single().get_selected_block() else {
+    let Some(mut block_type) = inventory.get_selected_block() else {
         return;
     };
     let up = normal_to_direction(normal.normal);
@@ -214,9 +224,7 @@ fn block_placing(
         entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
     }
     chunk.set(id.0, block_type.clone());
-    inventory
-        .single_mut()
-        .check_and_deduct_resources(&[(block_type, 1)]);
+    inventory.check_and_deduct_resources(&[(block_type, 1)]);
 }
 
 fn vec3_to_voxel_id(vec: Vec3) -> VoxelId {

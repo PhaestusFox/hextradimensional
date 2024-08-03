@@ -1,11 +1,16 @@
 use bevy::{
     input::ButtonInput,
+    log::warn,
     prelude::{info, Component, KeyCode, Query, Res, With},
     reflect::Reflect,
 };
+use leafwing_input_manager::prelude::ActionState;
 use serde::{Deserialize, Serialize};
 
-use crate::{game::main_character::Player, voxel_world::voxels::BlockType};
+use crate::{
+    game::{main_character::Player, PlayerAction},
+    voxel_world::voxels::BlockType,
+};
 
 /// Define a struct for inventory slots
 /// Fields are public to allow direct access from UI. This can be changed to getter in the future
@@ -142,6 +147,7 @@ pub fn clear_inventory(
 
 pub fn change_row_inventory(
     input: Res<ButtonInput<KeyCode>>,
+    player: Query<&ActionState<PlayerAction>>,
     mut player_inventory: Query<&mut Inventory, With<Player>>,
 ) {
     if input.any_pressed([KeyCode::ShiftLeft, KeyCode::ShiftRight]) {
@@ -186,8 +192,32 @@ pub fn change_row_inventory(
                 _ => {}
             }
         }
-    } else {
-        inc_dec(&input, &mut player_inventory)
+    }
+    let Ok(input) = player.get_single() else {
+        warn!("Player not loaded");
+        return;
+    };
+
+    if input.just_pressed(&PlayerAction::ToolbarNext) {
+        inc(&mut player_inventory)
+    }
+
+    if input.just_pressed(&PlayerAction::ToolbarPrev) {
+        dec(&mut player_inventory)
+    }
+}
+
+fn inc(player_inventory: &mut Query<&mut Inventory, With<Player>>) {
+    if let Ok(mut inventory) = player_inventory.get_single_mut() {
+        inventory.selected_row = (inventory.selected_row + 5) % 6;
+        inventory.selected_slot = inventory.selected_row * 10;
+    }
+}
+
+fn dec(player_inventory: &mut Query<&mut Inventory, With<Player>>) {
+    if let Ok(mut inventory) = player_inventory.get_single_mut() {
+        inventory.selected_row = (inventory.selected_row + 1) % 6;
+        inventory.selected_slot = inventory.selected_row * 10;
     }
 }
 

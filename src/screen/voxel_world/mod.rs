@@ -15,8 +15,10 @@ use crate::game::{
     assets::SoundtrackKey,
     audio::soundtrack::PlaySoundtrack,
     save::{inventory_save, save_chunk_data},
+    PlayerAction,
 };
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use leafwing_input_manager::prelude::ActionState;
 use player_controller::spawn_player;
 use ui::{
     cleanup_inventory_ui, handle_slot_selection, setup_inventory_ui, toggle_full_inventory,
@@ -52,8 +54,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        return_to_hex_map
-            .run_if(in_state(Screen::VoxelWorld).and_then(input_just_pressed(KeyCode::Escape))),
+        return_to_hex_map.run_if(in_state(Screen::VoxelWorld)),
     );
     app.add_systems(
         Update,
@@ -90,6 +91,16 @@ fn exit_playing(mut commands: Commands) {
     commands.trigger(PlaySoundtrack::Disable);
 }
 
-fn return_to_hex_map(mut next_screen: ResMut<NextState<Screen>>) {
+fn return_to_hex_map(
+    input: Query<&ActionState<PlayerAction>>,
+    mut next_screen: ResMut<NextState<Screen>>,
+) {
+    let Ok(input) = input.get_single() else {
+        warn!("No Player");
+        return;
+    };
+    if !input.just_pressed(&PlayerAction::ExitChunk) {
+        return;
+    }
     next_screen.set(Screen::HexMap);
 }

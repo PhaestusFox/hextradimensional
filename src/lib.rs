@@ -41,7 +41,7 @@ impl Plugin for AppPlugin {
                 })
                 .set(WindowPlugin {
                     primary_window: Window {
-                        title: "bevy_quickstart".to_string(),
+                        title: "Hextra-Dimensional ".to_string(),
                         canvas: Some("#bevy".to_string()),
                         fit_canvas_to_parent: true,
                         prevent_default_event_handling: true,
@@ -63,6 +63,10 @@ impl Plugin for AppPlugin {
         app.add_plugins((game::plugin, screen::plugin, ui::plugin));
 
         app.add_plugins(bevy_rapier3d::plugin::RapierPhysicsPlugin::<()>::default());
+
+        app.add_plugins(leafwing_input_manager::plugin::InputManagerPlugin::<
+            game::PlayerAction,
+        >::default());
 
         // Enable dev tools for dev builds.
         #[cfg(feature = "dev")]

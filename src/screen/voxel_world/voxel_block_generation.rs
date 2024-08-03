@@ -196,10 +196,6 @@ pub fn generate_dynamic_voxels(
             continue;
         };
         let mesh = generate_voxel_mesh(data);
-        println!(
-            "Generated {:?} vertexs",
-            mesh.mesh.attribute(Mesh::ATTRIBUTE_POSITION)
-        );
         let block = blocks.add(Block {
             id: BlockType::Voxel(id),
             flags: Vec::new(),
