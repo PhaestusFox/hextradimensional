@@ -17,6 +17,7 @@ pub enum KeyIcons {
     RightStick,
     UntypedStick,
     NotDone,
+    Add,
     NotSupported,
 }
 
@@ -137,6 +138,7 @@ impl super::widgets::UiIcon for KeyIcons {
             KeyIcons::MouseScrollDown => 2 * 34 + 13,
             KeyIcons::NotSupported => 12 * 34 + 28,
             KeyIcons::NotDone => NOT_DONE_INDEX,
+            KeyIcons::Add => 20 * 34 + 14,
         }
     }
 }

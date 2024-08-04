@@ -1,5 +1,9 @@
-use bevy::prelude::*;
-use leafwing_input_manager::prelude::{InputMap, UserInput};
+use bevy::{
+    input::mouse::{MouseMotion, MouseWheel},
+    prelude::*,
+};
+use bevy_rapier3d::na::ComplexField;
+use leafwing_input_manager::prelude::{DualAxis, InputMap, UserInput};
 
 use crate::{
     game::{
@@ -38,7 +42,12 @@ pub fn plugin(app: &mut App) {
         action: PlayerAction::Hit,
         old: BindingKey(None),
         new: BindingKey(None),
-    });
+        active: false,
+    })
+    .add_systems(
+        Update,
+        find_keybind.run_if(in_state(Screen::Options(OptionMenus::Rebind))),
+    );
 }
 
 fn spawn_select_menu(mut commands: Commands) {
@@ -152,6 +161,7 @@ pub enum RebindAction {
     Delete,
     Apply,
     Open,
+    Start,
 }
 
 fn spawn_rebind_menu(
@@ -175,13 +185,15 @@ fn spawn_rebind_menu(
                 }
             });
             p.horizontal().with_children(|p| {
+                p.label("New Binding: ");
                 if let Some(icon) = state.new.0.clone() {
-                    p.label("New Binding: ");
                     p.icon(layout.clone(), icons.clone(), KeyIcons::from(icon))
                         .insert(NewBinding);
                 } else {
-                    p.label("Unbound");
+                    p.icon(layout.clone(), icons.clone(), KeyIcons::NotSupported)
+                        .insert((NewBinding, Visibility::Hidden));
                 }
+                p.button("Set").insert(RebindAction::Start);
             });
             p.button("Apply").insert(RebindAction::Apply);
             p.button("Clear").insert(RebindAction::Delete);
@@ -200,6 +212,7 @@ fn update_new_binding(
         println!("Info");
         if let Some(new) = &state.new.0 {
             atlas.index = KeyIcons::from(new.clone()).index();
+            *vis = Visibility::Visible;
         } else {
             atlas.index = KeyIcons::NotSupported.index();
             *vis = Visibility::Hidden;
@@ -209,8 +222,8 @@ fn update_new_binding(
 
 fn run_rebind_actions(
     mut next_screen: ResMut<NextState<Screen>>,
-    mut button_query: InteractionQuery<(Entity, &RebindAction)>,
-    mut button_data: Query<(&BindingKey, &PlayerAction)>,
+    button_query: InteractionQuery<(Entity, &RebindAction)>,
+    button_data: Query<(&BindingKey, &PlayerAction)>,
     mut commands: Commands,
     mut state: ResMut<RebindingState>,
     layout: Res<crate::game::assets::ButtonLayout>,
@@ -221,12 +234,12 @@ fn run_rebind_actions(
         error!("Button Icons Not loaded");
         return;
     };
-    for (interaction, (button, action)) in &mut button_query {
+    for (interaction, (button, action)) in &button_query {
         if matches!(interaction, Interaction::Pressed) {
             match action {
                 RebindAction::Open => {
                     let Ok((binding, player)) = button_data.get(button) else {
-                        error!("Open button needs key and action componets");
+                        error!("Open button needs key and action components");
                         continue;
                     };
                     next_screen.set(Screen::Options(OptionMenus::Rebind));
@@ -237,7 +250,6 @@ fn run_rebind_actions(
                 }
                 RebindAction::Delete => state.new = BindingKey(None),
                 RebindAction::Apply => {
-                    next_screen.set(Screen::Options(OptionMenus::Rebind));
                     for mut bindings in &mut bindings {
                         if let Some(old) = state.old.0.clone() {
                             bindings.remove(&state.action, old);
@@ -248,8 +260,9 @@ fn run_rebind_actions(
                     }
                 }
                 RebindAction::New => {
+                    next_screen.set(Screen::Options(OptionMenus::Rebind));
                     let Ok((_, player)) = button_data.get(button) else {
-                        error!("New button needs key and action componets");
+                        error!("New button needs key and action components");
                         continue;
                     };
                     state.action = *player;
@@ -257,6 +270,7 @@ fn run_rebind_actions(
                     state.new = BindingKey(None);
                     spawn_rebind_menu(&mut commands, *player, &state, icons, &layout.0);
                 }
+                RebindAction::Start => state.active = true,
             }
         }
     }
@@ -267,7 +281,134 @@ struct RebindingState {
     action: PlayerAction,
     old: BindingKey,
     new: BindingKey,
+    active: bool,
 }
 
 #[derive(Component, Clone)]
 pub struct BindingKey(pub Option<UserInput>);
+
+fn find_keybind(
+    mut state: ResMut<RebindingState>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+    gamepad: Res<ButtonInput<GamepadButton>>,
+    mut mouse_wheel: EventReader<MouseWheel>,
+    mut mouse_motion: EventReader<MouseMotion>,
+    gamepad_axis: Res<Axis<GamepadAxis>>,
+    mouse: Res<ButtonInput<MouseButton>>,
+) {
+    if !state.active {
+        return;
+    }
+    println!("Active");
+    if let Some(key) = keyboard.get_just_pressed().last() {
+        state.new = BindingKey(Some(UserInput::Single(
+            leafwing_input_manager::prelude::InputKind::PhysicalKey(*key),
+        )));
+        state.active = false;
+        return;
+    }
+    if let Some(GamepadButton {
+        gamepad: _,
+        button_type,
+    }) = gamepad.get_just_pressed().last()
+    {
+        state.new = BindingKey(Some(UserInput::Single(
+            leafwing_input_manager::prelude::InputKind::GamepadButton(*button_type),
+        )));
+        state.active = false;
+        return;
+    }
+    if let Some(event) = mouse_wheel.read().last() {
+        if event.y > 0.1 {
+            state.new = BindingKey(Some(UserInput::Single(
+                leafwing_input_manager::prelude::InputKind::MouseWheel(
+                    leafwing_input_manager::prelude::MouseWheelDirection::Up,
+                ),
+            )));
+            state.active = false;
+        } else if event.y < -0.1 {
+            state.new = BindingKey(Some(UserInput::Single(
+                leafwing_input_manager::prelude::InputKind::MouseWheel(
+                    leafwing_input_manager::prelude::MouseWheelDirection::Down,
+                ),
+            )));
+            state.active = false;
+        }
+        return;
+    }
+
+    // this is commented out since you cant set leftclick as a key without doing some really fiddly mouse movement to get off the button and save changes
+
+    // if mouse_motion
+    //     .read()
+    //     .map(|p| p.delta)
+    //     .sum::<Vec2>()
+    //     .length_squared()
+    //     > 100.
+    // {
+    //     state.new = BindingKey(Some(UserInput::Single(
+    //         leafwing_input_manager::prelude::InputKind::DualAxis(DualAxis::mouse_motion()),
+    //     )));
+    //     state.active = false;
+    //     return;
+    // }
+
+    if let Some(event) = mouse.get_just_pressed().last() {
+        state.new = BindingKey(Some(UserInput::Single(
+            leafwing_input_manager::prelude::InputKind::Mouse(*event),
+        )));
+        state.active = false;
+    }
+
+    if let Some(axis) = gamepad_axis.get(GamepadAxis {
+        gamepad: Gamepad::new(0),
+        axis_type: GamepadAxisType::LeftStickX,
+    }) {
+        if axis.abs() > 0.5 {
+            state.new = BindingKey(Some(UserInput::Single(
+                leafwing_input_manager::prelude::InputKind::DualAxis(DualAxis::left_stick()),
+            )));
+            state.active = false;
+            return;
+        }
+    }
+
+    if let Some(axis) = gamepad_axis.get(GamepadAxis {
+        gamepad: Gamepad::new(0),
+        axis_type: GamepadAxisType::LeftStickY,
+    }) {
+        if axis.abs() > 0.5 {
+            state.new = BindingKey(Some(UserInput::Single(
+                leafwing_input_manager::prelude::InputKind::DualAxis(DualAxis::left_stick()),
+            )));
+            state.active = false;
+            return;
+        }
+    }
+
+    if let Some(axis) = gamepad_axis.get(GamepadAxis {
+        gamepad: Gamepad::new(0),
+        axis_type: GamepadAxisType::RightStickY,
+    }) {
+        if axis.abs() > 0.5 {
+            state.new = BindingKey(Some(UserInput::Single(
+                leafwing_input_manager::prelude::InputKind::DualAxis(DualAxis::right_stick()),
+            )));
+            state.active = false;
+            return;
+        }
+    }
+
+    if let Some(axis) = gamepad_axis.get(GamepadAxis {
+        gamepad: Gamepad::new(0),
+        axis_type: GamepadAxisType::RightStickX,
+    }) {
+        if axis.abs() > 0.5 {
+            state.new = BindingKey(Some(UserInput::Single(
+                leafwing_input_manager::prelude::InputKind::DualAxis(DualAxis::right_stick()),
+            )));
+            state.active = false;
+            return;
+        }
+    }
+}

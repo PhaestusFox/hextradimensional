@@ -4,7 +4,7 @@ use bevy::asset::embedded_asset;
 use bevy::{
     ecs::system::EntityCommands, prelude::*, render::texture::TRANSPARENT_IMAGE_HANDLE, ui::Val::*,
 };
-use leafwing_input_manager::prelude::InputMap;
+use leafwing_input_manager::prelude::{InputKind, InputMap, SingleAxis, UserInput};
 use strum::IntoEnumIterator;
 
 use super::icons::KeyIcons;
@@ -397,19 +397,42 @@ impl<T: Spawn> Widgets for T {
                     c.label(format!("{:?}:", action));
                     if let Some(bound_to) = bindings.get(&action) {
                         for binding in bound_to {
+                            let can_rebind =
+                                if action == PlayerAction::Look {
+                                    if let UserInput::Single(InputKind::DualAxis(axis)) = binding {
+                                        !matches!((axis.x.axis_type, axis.y.axis_type), (
+                                        leafwing_input_manager::axislike::AxisType::MouseMotion(_),
+                                        leafwing_input_manager::axislike::AxisType::MouseMotion(_),
+                                    ))
+                                    } else {
+                                        true
+                                    }
+                                } else {
+                                    true
+                                };
                             let icon = Into::<KeyIcons>::into(binding.clone());
-                            c.icon_button(layout.clone(), icons.clone(), icon).insert((
-                                crate::screen::options::RebindAction::Open,
-                                crate::screen::options::BindingKey(Some(binding.clone())),
-                                action
-                            ));
+                            let mut button = c.icon_button(layout.clone(), icons.clone(), icon);
+                            if can_rebind {
+                                button.insert((
+                                    crate::screen::options::RebindAction::Open,
+                                    crate::screen::options::BindingKey(Some(binding.clone())),
+                                    action,
+                                ));
+                            }
                         }
                     }
+                    c.icon_button(layout.clone(), icons.clone(), KeyIcons::Add)
+                        .insert((
+                            crate::screen::options::RebindAction::New,
+                            crate::screen::options::BindingKey(None),
+                            action,
+                        ));
                 });
             }
         });
         container
     }
+
     fn horizontal(&mut self) -> EntityCommands {
         self.spawn(NodeBundle {
             style: Style {
