@@ -51,6 +51,8 @@ pub struct HexSelect {
     Eq,
     strum::EnumIter,
     Component,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 #[non_exhaustive]
 pub enum PlayerAction {

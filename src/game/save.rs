@@ -1,20 +1,22 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use bevy::{
-    app::{App, Startup},
+    app::{App, PostStartup, Startup},
     asset::Assets,
     log::{error, info, warn},
-    prelude::{Commands, Query, ReflectResource, Res, Resource, With},
+    prelude::{Commands, Entity, OnEnter, OnExit, Query, ReflectResource, Res, Resource, With},
     reflect::Reflect,
 };
+use leafwing_input_manager::prelude::InputMap;
 use serde::{Deserialize, Serialize};
 
 use crate::screen::{
     inventory::Inventory,
     voxel_world::world::{VoxelChunk, VoxelStore},
+    Screen,
 };
 
-use super::{main_character::Player, HexSelect};
+use super::{main_character::Player, HexSelect, PlayerAction};
 
 #[derive(Resource, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect, Serialize, Deserialize)]
 #[reflect(Resource)]
@@ -126,5 +128,41 @@ pub fn save_chunk_data(
 
 pub(super) fn plugin(app: &mut App) {
     // This initializes as Company, Game to set store locations
-    app.add_systems(Startup, seed_load_and_save);
+    app.add_systems(Startup, seed_load_and_save)
+        .add_systems(PostStartup, keybind_load)
+        // save the keybind every time you exit the menu
+        .add_systems(
+            OnExit(Screen::Options(
+                crate::screen::options::OptionMenus::KeyBinding,
+            )),
+            keybind_save,
+        );
+}
+
+pub fn keybind_save(player: Query<&InputMap<PlayerAction>>, store: Res<VoxelStore>) {
+    if let Some(mut store) = store.write() {
+        for map in &player {
+            if store.set("Keybinds", map).is_err() {
+                error!("Failed to save keybingings");
+            };
+        }
+    }
+}
+
+pub fn keybind_load(
+    mut commands: Commands,
+    player: Query<Entity, With<Player>>,
+    store: Res<VoxelStore>,
+) {
+    if let Some(store) = store.read() {
+        if let Ok(bindings) = store.get::<InputMap<PlayerAction>>("Keybinds") {
+            if let Ok(player) = player.get_single() {
+                commands.entity(player).insert(bindings);
+            } else {
+                error!("Failed to get Player");
+            }
+        } else {
+            error!("Failed to save keybingings");
+        };
+    }
 }

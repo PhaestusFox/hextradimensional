@@ -220,28 +220,3 @@ fn dec(player_inventory: &mut Query<&mut Inventory, With<Player>>) {
         inventory.selected_slot = inventory.selected_row * 10;
     }
 }
-
-fn inc_dec(
-    input: &ButtonInput<KeyCode>,
-    player_inventory: &mut Query<&mut Inventory, With<Player>>,
-) {
-    if input.just_pressed(KeyCode::KeyQ) {
-        if let Ok(mut inventory) = player_inventory.get_single_mut() {
-            inventory.selected_row = (inventory.selected_row + 5) % 6;
-            inventory.selected_slot = inventory.selected_row * 10;
-        }
-    }
-
-    #[cfg(not(feature = "dev"))]
-    let increment_key = KeyCode::KeyE;
-
-    #[cfg(feature = "dev")]
-    let increment_key = KeyCode::KeyZ;
-
-    if input.just_pressed(increment_key) {
-        if let Ok(mut inventory) = player_inventory.get_single_mut() {
-            inventory.selected_row = (inventory.selected_row + 1) % 6;
-            inventory.selected_slot = inventory.selected_row * 10;
-        }
-    }
-}

@@ -248,6 +248,10 @@ impl VoxelStore {
     pub fn write(&self) -> Option<std::sync::RwLockWriteGuard<'_, PkvStore>> {
         self.0.write().ok()
     }
+
+    pub fn read(&self) -> Option<std::sync::RwLockReadGuard<'_, PkvStore>> {
+        self.0.read().ok()
+    }
 }
 
 impl FromWorld for VoxelStore {

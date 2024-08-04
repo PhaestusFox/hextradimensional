@@ -1,8 +1,7 @@
 use bevy::{
-    input::mouse::{MouseMotion, MouseWheel},
+    input::mouse::{/*MouseMotion,*/ MouseWheel},
     prelude::*,
 };
-use bevy_rapier3d::na::ComplexField;
 use leafwing_input_manager::prelude::{DualAxis, InputMap, UserInput};
 
 use crate::{
@@ -292,14 +291,13 @@ fn find_keybind(
     keyboard: Res<ButtonInput<KeyCode>>,
     gamepad: Res<ButtonInput<GamepadButton>>,
     mut mouse_wheel: EventReader<MouseWheel>,
-    mut mouse_motion: EventReader<MouseMotion>,
+    //mut mouse_motion: EventReader<MouseMotion>,
     gamepad_axis: Res<Axis<GamepadAxis>>,
     mouse: Res<ButtonInput<MouseButton>>,
 ) {
     if !state.active {
         return;
     }
-    println!("Active");
     if let Some(key) = keyboard.get_just_pressed().last() {
         state.new = BindingKey(Some(UserInput::Single(
             leafwing_input_manager::prelude::InputKind::PhysicalKey(*key),
@@ -408,7 +406,7 @@ fn find_keybind(
                 leafwing_input_manager::prelude::InputKind::DualAxis(DualAxis::right_stick()),
             )));
             state.active = false;
-            return;
+            // return;
         }
     }
 }
