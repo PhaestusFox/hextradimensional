@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use leafwing_input_manager::prelude::InputMap;
+use leafwing_input_manager::prelude::{InputMap, UserInput};
 
 use crate::{
     game::{
@@ -8,8 +8,9 @@ use crate::{
         PlayerAction,
     },
     ui::{
+        icons::KeyIcons,
         prelude::InteractionQuery,
-        widgets::{Containers, Widgets},
+        widgets::{Containers, UiIcon, Widgets},
     },
 };
 
@@ -25,7 +26,19 @@ pub fn plugin(app: &mut App) {
         spawn_keybind_menu,
     )
     .add_systems(OnEnter(Screen::Options(OptionMenus::Dev)), spawn_dev_menu)
-    .add_systems(Update, handle_option_action.run_if(in_state(Menu)));
+    .add_systems(
+        Update,
+        (handle_option_action, run_rebind_actions).run_if(in_state(Menu)),
+    )
+    .add_systems(
+        Update,
+        (update_new_binding).run_if(resource_changed::<RebindingState>),
+    )
+    .insert_resource(RebindingState {
+        action: PlayerAction::Hit,
+        old: BindingKey(None),
+        new: BindingKey(None),
+    });
 }
 
 fn spawn_select_menu(mut commands: Commands) {
@@ -78,6 +91,7 @@ pub enum OptionMenus {
     Select,
     KeyBinding,
     Dev,
+    Rebind,
 }
 
 impl OptionMenus {
@@ -86,6 +100,7 @@ impl OptionMenus {
             OptionMenus::Select => Screen::Title,
             OptionMenus::KeyBinding => Screen::Options(OptionMenus::Select),
             OptionMenus::Dev => Screen::Options(OptionMenus::Select),
+            OptionMenus::Rebind => Screen::Options(OptionMenus::KeyBinding),
         }
     }
 }
@@ -130,3 +145,129 @@ fn handle_option_action(
         }
     }
 }
+
+#[derive(Component)]
+pub enum RebindAction {
+    New,
+    Delete,
+    Apply,
+    Open,
+}
+
+fn spawn_rebind_menu(
+    commands: &mut Commands,
+    action: PlayerAction,
+    state: &RebindingState,
+    icons: &Handle<Image>,
+    layout: &Handle<TextureAtlasLayout>,
+) {
+    commands
+        .ui_root()
+        .insert(StateScoped(Screen::Options(OptionMenus::Rebind)))
+        .with_children(|p| {
+            p.label(format!("Rebinding {:?}", action));
+            p.horizontal().with_children(|p| {
+                if let Some(icon) = state.old.0.clone() {
+                    p.label("Current Binding: ");
+                    p.icon(layout.clone(), icons.clone(), KeyIcons::from(icon));
+                } else {
+                    p.label("Unbound");
+                }
+            });
+            p.horizontal().with_children(|p| {
+                if let Some(icon) = state.new.0.clone() {
+                    p.label("New Binding: ");
+                    p.icon(layout.clone(), icons.clone(), KeyIcons::from(icon))
+                        .insert(NewBinding);
+                } else {
+                    p.label("Unbound");
+                }
+            });
+            p.button("Apply").insert(RebindAction::Apply);
+            p.button("Clear").insert(RebindAction::Delete);
+            p.button("Close").insert(OptionAction::Back);
+        });
+}
+
+#[derive(Component)]
+struct NewBinding;
+
+fn update_new_binding(
+    state: Res<RebindingState>,
+    mut new: Query<(&mut TextureAtlas, &mut Visibility), With<NewBinding>>,
+) {
+    for (mut atlas, mut vis) in &mut new {
+        println!("Info");
+        if let Some(new) = &state.new.0 {
+            atlas.index = KeyIcons::from(new.clone()).index();
+        } else {
+            atlas.index = KeyIcons::NotSupported.index();
+            *vis = Visibility::Hidden;
+        }
+    }
+}
+
+fn run_rebind_actions(
+    mut next_screen: ResMut<NextState<Screen>>,
+    mut button_query: InteractionQuery<(Entity, &RebindAction)>,
+    mut button_data: Query<(&BindingKey, &PlayerAction)>,
+    mut commands: Commands,
+    mut state: ResMut<RebindingState>,
+    layout: Res<crate::game::assets::ButtonLayout>,
+    icons: Res<HandleMap<ImageKey>>,
+    mut bindings: Query<&mut InputMap<PlayerAction>>,
+) {
+    let Some(icons) = icons.get(&ImageKey::ButtonIcons) else {
+        error!("Button Icons Not loaded");
+        return;
+    };
+    for (interaction, (button, action)) in &mut button_query {
+        if matches!(interaction, Interaction::Pressed) {
+            match action {
+                RebindAction::Open => {
+                    let Ok((binding, player)) = button_data.get(button) else {
+                        error!("Open button needs key and action componets");
+                        continue;
+                    };
+                    next_screen.set(Screen::Options(OptionMenus::Rebind));
+                    state.action = *player;
+                    state.old = binding.clone();
+                    state.new = binding.clone();
+                    spawn_rebind_menu(&mut commands, *player, &state, icons, &layout.0);
+                }
+                RebindAction::Delete => state.new = BindingKey(None),
+                RebindAction::Apply => {
+                    next_screen.set(Screen::Options(OptionMenus::Rebind));
+                    for mut bindings in &mut bindings {
+                        if let Some(old) = state.old.0.clone() {
+                            bindings.remove(&state.action, old);
+                        }
+                        if let Some(new) = state.new.0.clone() {
+                            bindings.insert(state.action, new);
+                        }
+                    }
+                }
+                RebindAction::New => {
+                    let Ok((_, player)) = button_data.get(button) else {
+                        error!("New button needs key and action componets");
+                        continue;
+                    };
+                    state.action = *player;
+                    state.old = BindingKey(None);
+                    state.new = BindingKey(None);
+                    spawn_rebind_menu(&mut commands, *player, &state, icons, &layout.0);
+                }
+            }
+        }
+    }
+}
+
+#[derive(Resource)]
+struct RebindingState {
+    action: PlayerAction,
+    old: BindingKey,
+    new: BindingKey,
+}
+
+#[derive(Component, Clone)]
+pub struct BindingKey(pub Option<UserInput>);

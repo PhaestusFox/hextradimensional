@@ -70,6 +70,13 @@ pub trait Widgets {
         icons: Handle<Image>,
         icon: impl UiIcon,
     ) -> EntityCommands;
+
+    fn icon(
+        &mut self,
+        layout: Handle<TextureAtlasLayout>,
+        icons: Handle<Image>,
+        icon: impl UiIcon,
+    ) -> EntityCommands;
 }
 
 impl<T: Spawn> Widgets for T {
@@ -391,7 +398,11 @@ impl<T: Spawn> Widgets for T {
                     if let Some(bound_to) = bindings.get(&action) {
                         for binding in bound_to {
                             let icon = Into::<KeyIcons>::into(binding.clone());
-                            c.icon_button(layout.clone(), icons.clone(), icon);
+                            c.icon_button(layout.clone(), icons.clone(), icon).insert((
+                                crate::screen::options::RebindAction::Open,
+                                crate::screen::options::BindingKey(Some(binding.clone())),
+                                action
+                            ));
                         }
                     }
                 });
@@ -453,6 +464,30 @@ impl<T: Spawn> Widgets for T {
             ));
         });
         entity
+    }
+
+    fn icon(
+        &mut self,
+        layout: Handle<TextureAtlasLayout>,
+        icons: Handle<Image>,
+        icon: impl UiIcon,
+    ) -> EntityCommands {
+        self.spawn((
+            Name::new("Icon"),
+            ImageBundle {
+                image: UiImage::new(icons),
+                style: Style {
+                    width: Val::Px(32.),
+                    height: Val::Px(32.),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            TextureAtlas {
+                layout,
+                index: icon.index(),
+            },
+        ))
     }
 }
 

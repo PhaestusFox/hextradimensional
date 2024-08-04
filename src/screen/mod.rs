@@ -5,7 +5,7 @@ mod hex_map;
 pub mod hex_vox_util;
 pub mod inventory;
 mod loading;
-mod options;
+pub mod options;
 mod splash;
 mod title;
 pub mod voxel_world;

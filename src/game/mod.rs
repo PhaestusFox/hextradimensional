@@ -10,7 +10,7 @@ use crate::screen::{
 use bevy::{
     app::{App, Startup},
     asset::Handle,
-    prelude::{IntoSystemConfigs, Resource},
+    prelude::{Component, IntoSystemConfigs, Resource},
     reflect::Reflect,
 };
 use main_character::spawn_main_player;
@@ -50,6 +50,7 @@ pub struct HexSelect {
     PartialEq,
     Eq,
     strum::EnumIter,
+    Component,
 )]
 #[non_exhaustive]
 pub enum PlayerAction {
