@@ -20,6 +20,7 @@ pub(super) fn plugin(app: &mut App) {
 enum TitleAction {
     Play,
     Credits,
+    Options,
     /// Exit doesn't work well with embedded applications.
     #[cfg(not(target_family = "wasm"))]
     Exit,
@@ -32,7 +33,7 @@ fn enter_title(mut commands: Commands) {
         .with_children(|children| {
             children.button("Play").insert(TitleAction::Play);
             children.button("Credits").insert(TitleAction::Credits);
-
+            children.button("Options").insert(TitleAction::Options);
             #[cfg(not(target_family = "wasm"))]
             children.button("Exit").insert(TitleAction::Exit);
         });
@@ -48,7 +49,9 @@ fn handle_title_action(
             match action {
                 TitleAction::Play => next_screen.set(Screen::HexMap),
                 TitleAction::Credits => next_screen.set(Screen::Credits),
-
+                TitleAction::Options => {
+                    next_screen.set(Screen::Options(super::options::OptionMenus::Select))
+                }
                 #[cfg(not(target_family = "wasm"))]
                 TitleAction::Exit => {
                     app_exit.send(AppExit::Success);

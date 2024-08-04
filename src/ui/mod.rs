@@ -3,6 +3,7 @@
 // Unused utilities and re-exports may trigger these lints undesirably.
 #![allow(dead_code, unused_imports)]
 
+pub mod icons;
 pub mod interaction;
 pub mod palette;
 pub mod widgets;

@@ -35,12 +35,12 @@ fn default_player_inputs() -> InputMap<PlayerAction> {
 
     map.insert(
         PlayerAction::Place,
-        UserInput::Single(InputKind::GamepadButton(GamepadButtonType::LeftTrigger2)),
+        UserInput::Single(InputKind::Mouse(MouseButton::Right)),
     );
 
     map.insert(
         PlayerAction::Place,
-        UserInput::Single(InputKind::Mouse(MouseButton::Right)),
+        UserInput::Single(InputKind::GamepadButton(GamepadButtonType::LeftTrigger2)),
     );
 
     map.insert(
@@ -152,18 +152,13 @@ fn default_player_inputs() -> InputMap<PlayerAction> {
     );
 
     map.insert(
-        PlayerAction::ToolbarPrev,
-        UserInput::Single(InputKind::GamepadButton(GamepadButtonType::DPadDown)),
+        PlayerAction::ItemInc,
+        UserInput::Single(InputKind::MouseWheel(MouseWheelDirection::Up)),
     );
 
     map.insert(
         PlayerAction::ItemInc,
         UserInput::Single(InputKind::GamepadButton(GamepadButtonType::RightTrigger)),
-    );
-
-    map.insert(
-        PlayerAction::ItemInc,
-        UserInput::Single(InputKind::MouseWheel(MouseWheelDirection::Up)),
     );
 
     map.insert(
@@ -187,5 +182,11 @@ fn default_player_inputs() -> InputMap<PlayerAction> {
         PlayerAction::ToolbarPrev,
         UserInput::Single(InputKind::PhysicalKey(KeyCode::KeyE)),
     );
+
+    map.insert(
+        PlayerAction::ToolbarPrev,
+        UserInput::Single(InputKind::GamepadButton(GamepadButtonType::DPadDown)),
+    );
+
     map
 }

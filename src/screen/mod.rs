@@ -5,6 +5,7 @@ mod hex_map;
 pub mod hex_vox_util;
 pub mod inventory;
 mod loading;
+mod options;
 mod splash;
 mod title;
 pub mod voxel_world;
@@ -20,10 +21,13 @@ pub(super) fn plugin(app: &mut App) {
     app.insert_resource(Target(BlockType::Stone));
     app.init_resource::<NextTarget>();
 
+    app.add_computed_state::<Menu>();
+
     app.add_plugins((
         splash::plugin,
         loading::plugin,
         title::plugin,
+        options::plugin,
         credits::plugin,
         hex_map::plugin,
         voxel_world::plugin,
@@ -64,5 +68,21 @@ pub enum Screen {
     Credits,
     HexMap,
     VoxelWorld,
-    //Multiplayer,
+    Options(options::OptionMenus),
+}
+
+#[derive(Default, Debug, Hash, PartialEq, Eq, Clone)]
+struct Menu;
+
+impl ComputedStates for Menu {
+    type SourceStates = Screen;
+    fn compute(sources: Self::SourceStates) -> Option<Self> {
+        if sources == Screen::Title {
+            Some(Menu)
+        } else if let Screen::Options(_) = sources {
+            Some(Menu)
+        } else {
+            None
+        }
+    }
 }

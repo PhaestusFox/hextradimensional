@@ -13,29 +13,54 @@ pub(super) fn plugin(app: &mut App) {
 
     app.register_type::<HandleMap<SoundtrackKey>>();
     app.init_resource::<HandleMap<SoundtrackKey>>();
+
+    app.register_type::<ButtonLayout>();
+    app.init_resource::<ButtonLayout>();
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum ImageKey {
     Ducky,
+    ButtonIcons,
 }
 
 impl AssetKey for ImageKey {
     type Asset = Image;
 }
 
+#[derive(Resource, Reflect)]
+pub struct ButtonLayout(pub Handle<TextureAtlasLayout>);
+
+impl FromWorld for ButtonLayout {
+    fn from_world(world: &mut World) -> Self {
+        world.resource_mut::<Assets<TextureAtlasLayout>>().insert(
+            crate::ui::palette::BUTTON_KEYBIND_ICONS.id(),
+            TextureAtlasLayout::from_grid(UVec2::new(16, 16), 34, 24, None, None),
+        );
+        let handle = world
+            .resource_mut::<Assets<TextureAtlasLayout>>()
+            .get_strong_handle(crate::ui::palette::BUTTON_KEYBIND_ICONS.id())
+            .expect("Handle to work");
+        ButtonLayout(handle)
+    }
+}
+
 impl FromWorld for HandleMap<ImageKey> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
-        [(
-            ImageKey::Ducky,
-            asset_server.load_with_settings(
-                "images/ducky.png",
-                |settings: &mut ImageLoaderSettings| {
-                    settings.sampler = ImageSampler::nearest();
-                },
+        let key_bind = asset_server.load("kenney/button_icons.png");
+        [
+            (ImageKey::ButtonIcons, key_bind.clone()),
+            (
+                ImageKey::Ducky,
+                asset_server.load_with_settings(
+                    "images/ducky.png",
+                    |settings: &mut ImageLoaderSettings| {
+                        settings.sampler = ImageSampler::nearest();
+                    },
+                ),
             ),
-        )]
+        ]
         .into()
     }
 }

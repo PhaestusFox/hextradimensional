@@ -40,7 +40,18 @@ pub struct HexSelect {
     pub chunk: Handle<VoxelChunk>,
 }
 
-#[derive(leafwing_input_manager::Actionlike, Reflect, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(
+    Debug,
+    leafwing_input_manager::Actionlike,
+    Reflect,
+    Clone,
+    Copy,
+    Hash,
+    PartialEq,
+    Eq,
+    strum::EnumIter,
+)]
+#[non_exhaustive]
 pub enum PlayerAction {
     Hit,
     Place,

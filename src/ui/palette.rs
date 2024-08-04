@@ -8,3 +8,6 @@ pub const LABEL_TEXT: Color = Color::srgb(0.867, 0.827, 0.412);
 pub const HEADER_TEXT: Color = Color::srgb(0.867, 0.827, 0.412);
 
 pub const NODE_BACKGROUND: Color = Color::srgb(0.286, 0.478, 0.773);
+
+pub const BUTTON_KEYBIND_ICONS: Handle<TextureAtlasLayout> =
+    Handle::weak_from_u128(0x6f3e22fa58ec4ddab5bbf6be15c1fe1a);
