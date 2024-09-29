@@ -8,6 +8,7 @@ pub(super) fn plugin(app: &mut App) {
     // Print state transitions in dev builds
     app.add_systems(Update, log_transitions::<Screen>);
     // Added Editor in dev builds
+    #[cfg(feature = "dev_native")]
     app.add_plugins(bevy_editor_pls::EditorPlugin::default());
     // Add Debug Rendering for rapier
     app.add_plugins(bevy_rapier3d::prelude::RapierDebugRenderPlugin::default());

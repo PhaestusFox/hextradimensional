@@ -24,7 +24,14 @@ impl Plugin for VoxelLogic {
     fn build(&self, app: &mut App) {
         app.add_systems(
             FixedUpdate,
-            (drill_logic, melter_logic, score_logic, piston_logic)
+            (
+                drill_logic,
+                melter_logic,
+                score_logic,
+                piston_logic,
+                conveyor_init,
+                conveyor_logic,
+            )
                 .run_if(in_state(Screen::VoxelWorld)),
         );
     }
@@ -209,5 +216,45 @@ fn piston_logic(
                 impulse: pos.up() * 5. * power.0,
             });
         }
+    }
+}
+
+#[derive(Component)]
+pub struct Conveyor;
+
+fn conveyor_logic(
+    conveyors: Query<&Children, With<Conveyor>>,
+    mut transforms: Query<&mut Transform, With<Collider>>,
+    time: Res<Time>,
+) {
+    for conveyor in &conveyors {
+        for child in conveyor.iter() {
+            if let Ok(mut transform) = transforms.get_mut(*child) {
+                transform.translation.z += time.delta_seconds();
+                if transform.translation.z > 0.375 {
+                    transform.translation.z -= 1.;
+                }
+            }
+        }
+    }
+}
+
+fn conveyor_init(new_conveyor: Query<Entity, Added<Conveyor>>, mut commands: Commands) {
+    for conveyor in &new_conveyor {
+        commands.entity(conveyor).with_children(|c| {
+            for i in 0..4 {
+                c.spawn((
+                    SpatialBundle {
+                        transform: Transform::from_translation(Vec3::new(
+                            0.,
+                            0.40,
+                            -0.375 + 0.25 * i as f32,
+                        )),
+                        ..Default::default()
+                    },
+                    Collider::cuboid(0.5, 0.1, 0.125),
+                ));
+            }
+        });
     }
 }

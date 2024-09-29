@@ -122,20 +122,20 @@ fn pickup_block(
     selected: Res<HexSelect>,
     mut chunk_data: ResMut<Assets<VoxelChunk>>,
 ) {
-    for mut inventory in &mut player {
-        for (entity, state, id) in &blocks {
-            if state.0 >= 0.55 {
-                let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
-                    continue;
-                };
-                let out = chunk.set(id.0, BlockType::Air);
-                if out == BlockType::Air {
-                    warn!("Removed Air");
-                    continue;
-                };
-                inventory.add_resource(out, 1);
-                commands.entity(entity).despawn_recursive();
+    for (entity, state, id) in &blocks {
+        if state.0 >= 0.55 {
+            let Some(chunk) = chunk_data.get_mut(selected.chunk.id()) else {
+                continue;
+            };
+            let out = chunk.set(id.0, BlockType::Air);
+            if out == BlockType::Air {
+                warn!("Removed Air");
+                continue;
+            };
+            for mut inventory in &mut player {
+                inventory.add_resource(out.clone(), 1);
             }
+            commands.entity(entity).despawn_recursive();
         }
     }
 }
@@ -172,7 +172,7 @@ fn block_placing(
     voxels: Res<Blocks>,
     voxel_data: Res<Assets<Block>>,
 ) {
-    let Ok((mut inventory, input)) = player.get_single_mut() else {
+    let Ok((inventory, input)) = player.get_single() else {
         warn!("No Player Spawned");
         return;
     };
@@ -224,6 +224,7 @@ fn block_placing(
         entity.insert(bevy_rapier3d::prelude::Collider::cuboid(0.5, 0.5, 0.5));
     }
     chunk.set(id.0, block_type.clone());
+    let (mut inventory, _) = player.single_mut();
     inventory.check_and_deduct_resources(&[(block_type, 1)]);
 }
 

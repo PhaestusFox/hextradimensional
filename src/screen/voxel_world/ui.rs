@@ -55,6 +55,7 @@ pub fn update_inventory_ui(
     materials: Res<Assets<StandardMaterial>>,
 ) {
     if let Ok(inventory) = player_query.get_single() {
+        println!("Update Inventory");
         if let Ok(ui_root) = ui_root_query.get_single() {
             // Remove the old inventory UI
             commands.entity(ui_root).despawn_descendants();
@@ -74,33 +75,37 @@ pub fn handle_slot_selection(
     mut mouse_wheel: EventReader<MouseWheel>,
     input: Query<&ActionState<PlayerAction>>,
 ) {
-    if let Ok(mut inventory) = inventory_query.get_single_mut() {
-        for (i, key) in [
-            KeyCode::Digit1,
-            KeyCode::Digit2,
-            KeyCode::Digit3,
-            KeyCode::Digit4,
-            KeyCode::Digit5,
-            KeyCode::Digit6,
-            KeyCode::Digit7,
-            KeyCode::Digit8,
-            KeyCode::Digit9,
-            KeyCode::Digit0,
-        ]
-        .iter()
-        .enumerate()
-        {
-            if keyboard_input.just_pressed(*key) {
+    for (i, key) in [
+        KeyCode::Digit1,
+        KeyCode::Digit2,
+        KeyCode::Digit3,
+        KeyCode::Digit4,
+        KeyCode::Digit5,
+        KeyCode::Digit6,
+        KeyCode::Digit7,
+        KeyCode::Digit8,
+        KeyCode::Digit9,
+        KeyCode::Digit0,
+    ]
+    .iter()
+    .enumerate()
+    {
+        if keyboard_input.just_pressed(*key) {
+            if let Ok(mut inventory) = inventory_query.get_single_mut() {
                 inventory.select_slot(i);
                 break;
             }
         }
-        let mut delta = 0;
-        if let Ok(input) = input.get_single() {
-            delta += input.just_pressed(&PlayerAction::ItemInc) as isize;
-            delta -= input.just_pressed(&PlayerAction::ItemDec) as isize;
+    }
+    let mut delta = 0;
+    if let Ok(input) = input.get_single() {
+        delta += input.just_pressed(&PlayerAction::ItemInc) as isize;
+        delta -= input.just_pressed(&PlayerAction::ItemDec) as isize;
+    }
+    if delta > 1 {
+        if let Ok(mut inventory) = inventory_query.get_single_mut() {
+            let new = (inventory.selected_slot as isize + delta) % 10;
+            inventory.select_slot(new as usize);
         }
-        let new = (inventory.selected_slot as isize + delta) % 10;
-        inventory.select_slot(new as usize);
     }
 }

@@ -90,6 +90,7 @@ pub enum BlockLogic {
     Melter,
     ScoreGive,
     Piston(u8),
+    Conveyor,
 }
 
 impl Block {
@@ -142,6 +143,7 @@ impl Block {
                 BlockLogic::Melter => entity.insert(Melter),
                 BlockLogic::ScoreGive => entity.insert(ScoreGive),
                 BlockLogic::Piston(power) => entity.insert(Piston(*power as f32)),
+                BlockLogic::Conveyor => entity.insert(Conveyor),
             };
         }
     }
@@ -182,6 +184,7 @@ pub enum BlockType {
     Magnesium,
     Piston(MapDirection),
     PistonL2(MapDirection),
+    Conveyor(MapDirection),
     Voxel(VoxelBlockId),
 }
 
@@ -228,7 +231,10 @@ impl PartialEq for BlockType {
 impl BlockType {
     pub fn direction(&self) -> MapDirection {
         match self {
-            BlockType::Piston(direction) => *direction,
+            BlockType::Piston(d)
+            | BlockType::PistonL2(d)
+            | BlockType::Drill(d)
+            | BlockType::Conveyor(d) => *d,
             _ => MapDirection::Up,
         }
     }
@@ -265,6 +271,7 @@ impl BlockType {
             BlockType::Piston(_) => "blocks/piston.block",
             BlockType::PistonL2(_) => "blocks/piston_l2.block",
             BlockType::Voxel(_) => "blocks/voxel.block",
+            BlockType::Conveyor(_) => "blocks/conveyor.block",
         }
     }
 
@@ -291,6 +298,7 @@ impl BlockType {
             BlockType::Piston(_) => Color::srgba(0.5, 0.5, 0.0, 1.0), // Olive
             BlockType::PistonL2(_) => Color::srgba(0.25, 0.25, 0.0, 1.0), // Olive / 2.?
             BlockType::Voxel(_) => Color::srgba(1.0, 1.0, 1.0, 1.0), // White
+            BlockType::Conveyor(_) => Color::srgba(1., 1., 1., 1.), //White
         }
     }
 }
